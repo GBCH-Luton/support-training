@@ -191,6 +191,7 @@ function BuilderInner() {
                       {section.type === 'video' ? '▶ Video' : section.type === 'slides' ? '🖼️ Slides' : '📖 Reading'}
                     </span>
                     <span style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A18', flex: 1 }}>{section.title || 'Untitled section'}</span>
+                    <SectionQuestionCount sectionId={section.id} />
                     <div style={{ display: 'flex', gap: '4px' }}>
                       {idx > 0 && <button onClick={() => moveSection(section.id, 'up')} style={iconBtn}>↑</button>}
                       {idx < sections.length - 1 && <button onClick={() => moveSection(section.id, 'down')} style={iconBtn}>↓</button>}
@@ -248,6 +249,46 @@ export default function AdminBuilder() {
   return <Suspense fallback={<div style={{ padding: '40px' }}>Loading...</div>}><BuilderInner /></Suspense>
 }
 
+function SectionQuestionCount({ sectionId }: { sectionId: string }) {
+    const [counts, setCounts] = useState<{ section_check: number; final_exam: number } | null>(null)
+  
+    useEffect(() => {
+      async function fetchCounts() {
+        const { data } = await supabase.from('questions').select('quiz_type').eq('section_id', sectionId)
+        if (data) {
+          setCounts({
+            section_check: data.filter(q => q.quiz_type === 'section_check').length,
+            final_exam: data.filter(q => q.quiz_type === 'final_exam').length,
+          })
+        }
+      }
+      fetchCounts()
+    }, [sectionId])
+  
+    if (!counts) return null
+  
+    return (
+      <div style={{ display: 'flex', gap: '5px' }}>
+        {counts.section_check > 0 && (
+          <span style={{ padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: 'rgba(133,79,11,0.1)', color: '#854F0B' }}>
+            📝 {counts.section_check} check
+          </span>
+        )}
+        {counts.final_exam > 0 && (
+          <span style={{ padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: 'rgba(83,74,183,0.1)', color: '#534AB7' }}>
+            ★ {counts.final_exam} exam
+          </span>
+        )}
+        {counts.section_check === 0 && counts.final_exam === 0 && (
+          <span style={{ padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: 'rgba(0,0,0,0.05)', color: '#8A8A82' }}>
+            No questions yet
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  
 const card: React.CSSProperties = { background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '20px', marginBottom: '16px' }
 const cardTitle: React.CSSProperties = { fontSize: '15px', fontWeight: 700, color: '#1A1A18', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }
 const fg: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '5px' }
