@@ -51,7 +51,7 @@ export default function Home() {
   const visibleCourses = activeCat === 'all' ? allowedCourses : allowedCourses.filter((c) => c.category_id === activeCat)
 
   return (
-    <div style={{ padding: '40px', fontFamily: 'sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18' }}>
+    <div style={{ padding: '40px 5%', fontFamily: 'sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18', width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <h1>📚 All Courses</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

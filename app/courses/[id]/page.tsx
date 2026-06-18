@@ -30,6 +30,7 @@ export default function CoursePage() {
   // Slide viewer state
   const [slideIndex, setSlideIndex] = useState(0)
   const [slidesSeen, setSlidesSeen] = useState<Record<string, boolean>>({})
+  const [slideFullscreen, setSlideFullscreen] = useState(false)
 
   const [showQuiz, setShowQuiz] = useState(false)
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -162,7 +163,7 @@ export default function CoursePage() {
       }).filter(Boolean) as { section: Section; pct: number }[]
       return (
         <div style={pageStyle}>
-          <div style={{ maxWidth: '600px' }}>
+          <div style={{ maxWidth: '900px' }}>
             <div style={{ fontSize: '48px', marginBottom: '8px' }}>📊</div>
             <h1 style={{ color: '#993C1D', marginBottom: '6px' }}>Not passed — {examResult.score}%</h1>
             <p style={{ color: '#5A5A55', marginBottom: '24px' }}>You need {course.pass_mark}%. Here&apos;s how you did per section.</p>
@@ -195,10 +196,10 @@ export default function CoursePage() {
       <div style={pageStyle}>
         <button onClick={() => { setInFinalExam(false); setExamAnswers({}); setExamQ(0) }} style={backBtn}>← Back to course overview</button>
         <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '20px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>★ Final exam · Question {examQ + 1} of {finalQuestions.length} · Pass {course.pass_mark}%</div>
-        <div style={{ height: '4px', background: '#E4E2DC', borderRadius: '2px', maxWidth: '600px', marginBottom: '24px', overflow: 'hidden' }}>
+        <div style={{ height: '4px', background: '#E4E2DC', borderRadius: '2px', maxWidth: '900px', marginBottom: '24px', overflow: 'hidden' }}>
           <div style={{ width: `${(examQ / finalQuestions.length) * 100}%`, height: '100%', background: '#534AB7', transition: 'width .3s' }} />
         </div>
-        <div style={{ maxWidth: '600px' }}>
+        <div style={{ maxWidth: '900px' }}>
           <div style={{ fontSize: '17px', fontWeight: 700, marginBottom: '18px' }}>{q.question_text}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', marginBottom: '24px' }}>
             {(['a', 'b', 'c', 'd'] as const).map((letter) => {
@@ -236,7 +237,7 @@ export default function CoursePage() {
       if (quizResult) {
         return (
           <div style={pageStyle}>
-            <div style={{ maxWidth: '560px', textAlign: 'center', paddingTop: '40px' }}>
+            <div style={{ maxWidth: '900px', textAlign: 'center', paddingTop: '40px' }}>
               <div style={{ fontSize: '48px', marginBottom: '12px' }}>{quizResult.passed ? '🎉' : '😔'}</div>
               <h1 style={{ color: quizResult.passed ? '#0F6E56' : '#993C1D', marginBottom: '8px' }}>{quizResult.passed ? `Passed! ${quizResult.score}%` : `Not quite — ${quizResult.score}%`}</h1>
               <p style={{ color: '#5A5A55', marginBottom: '24px' }}>{quizResult.passed ? 'Great work — saved to your record.' : `You need ${course.pass_mark}% to pass. Review and try again.`}</p>
@@ -258,10 +259,10 @@ export default function CoursePage() {
         <div style={pageStyle}>
           <button onClick={() => setShowQuiz(false)} style={backBtn}>← Back to section</button>
           <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '20px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>📝 Section check · Question {quizQ + 1} of {qs.length}</div>
-          <div style={{ height: '4px', background: '#E4E2DC', borderRadius: '2px', maxWidth: '600px', marginBottom: '24px', overflow: 'hidden' }}>
+          <div style={{ height: '4px', background: '#E4E2DC', borderRadius: '2px', maxWidth: '900px', marginBottom: '24px', overflow: 'hidden' }}>
             <div style={{ width: `${(quizQ / qs.length) * 100}%`, height: '100%', background: '#2D5BE3', transition: 'width .3s' }} />
           </div>
-          <div style={{ maxWidth: '600px' }}>
+          <div style={{ maxWidth: '900px' }}>
             <div style={{ fontSize: '17px', fontWeight: 700, marginBottom: '18px' }}>{cq.question_text}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', marginBottom: '24px' }}>
               {(['a', 'b', 'c', 'd'] as const).map((letter) => {
@@ -298,14 +299,36 @@ export default function CoursePage() {
       const allSeen = slidesSeen[section.id]
       return (
         <div style={pageStyle}>
+          {slideFullscreen && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+              <button
+                onClick={() => setSlideFullscreen(false)}
+                style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+              >✕ Close</button>
+
+              <img src={slideList[slideIndex]} alt={`Slide ${slideIndex + 1}`} style={{ maxWidth: '95%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '8px' }} />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
+                <button onClick={() => setSlideIndex(Math.max(0, slideIndex - 1))} disabled={slideIndex === 0}
+                  style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 18px', fontSize: '15px', fontWeight: 600, cursor: slideIndex === 0 ? 'not-allowed' : 'pointer', opacity: slideIndex === 0 ? 0.4 : 1 }}>← Previous</button>
+                <span style={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Slide {slideIndex + 1} of {slideList.length}</span>
+                <button onClick={() => { if (slideIndex < slideList.length - 1) setSlideIndex(slideIndex + 1) }} disabled={slideIndex === slideList.length - 1}
+                  style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 18px', fontSize: '15px', fontWeight: 600, cursor: slideIndex === slideList.length - 1 ? 'not-allowed' : 'pointer', opacity: slideIndex === slideList.length - 1 ? 0.4 : 1 }}>Next →</button>
+              </div>
+            </div>
+          )}
           <button onClick={() => setStarted(false)} style={backBtn}>← Back to course overview</button>
           <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '20px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🖼️ Slides · Section {currentIndex + 1} of {sections.length}</div>
           <h1 style={{ marginBottom: '18px' }}>{section.title}</h1>
 
-          <div style={{ maxWidth: '720px' }}>
+          <div style={{ maxWidth: '100%' }}>
             {/* Slide image */}
-            <div style={{ background: '#000', borderRadius: '12px', overflow: 'hidden', marginBottom: '14px' }}>
-              <img src={slideList[slideIndex]} alt={`Slide ${slideIndex + 1}`} style={{ width: '100%', display: 'block' }} />
+            <div style={{ position: 'relative', background: '#000', borderRadius: '12px', overflow: 'hidden', marginBottom: '14px' }}>
+              <img src={slideList[slideIndex]} alt={`Slide ${slideIndex + 1}`} style={{ width: '100%', maxHeight: '420px', objectFit: 'contain', display: 'block' }} />
+              <button
+                onClick={() => setSlideFullscreen(true)}
+                style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >⛶ Fullscreen</button>
             </div>
 
             {/* Slide navigation */}
@@ -399,7 +422,7 @@ export default function CoursePage() {
 
       <div style={{ fontSize: '52px', marginTop: '24px', marginBottom: '12px' }}>{course.icon}</div>
       <h1 style={{ marginBottom: '12px' }}>{course.title}</h1>
-      <p style={{ fontSize: '16px', color: '#5A5A55', lineHeight: '1.6', maxWidth: '600px', marginBottom: '24px' }}>{course.description}</p>
+      <p style={{ fontSize: '16px', color: '#5A5A55', lineHeight: '1.6', maxWidth: '900px', marginBottom: '24px' }}>{course.description}</p>
 
       {examPassedBefore && (
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(15,110,86,0.1)', color: '#0F6E56', fontSize: '13px', fontWeight: 600, marginBottom: '20px' }}>✓ You have already completed this course</div>
@@ -412,7 +435,7 @@ export default function CoursePage() {
       </div>
 
       <h2 style={{ fontSize: '18px', marginBottom: '14px' }}>Course content · {sections.length} sections</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '600px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '900px', marginBottom: '20px' }}>
         {sections.map((section, index) => (
           <div key={section.id} style={sectionCard}>
             <div style={{ ...sectionNumber, background: passedSections[section.id] ? 'rgba(15,110,86,0.12)' : 'rgba(45,91,227,0.1)', color: passedSections[section.id] ? '#0F6E56' : '#2D5BE3' }}>{passedSections[section.id] ? '✓' : index + 1}</div>
@@ -425,7 +448,7 @@ export default function CoursePage() {
       </div>
 
       {finalQuestions.length > 0 && (
-        <div style={{ ...sectionCard, maxWidth: '600px', marginBottom: '20px', borderColor: allSectionsPassed ? 'rgba(83,74,183,0.3)' : 'rgba(0,0,0,0.08)', opacity: allSectionsPassed ? 1 : 0.55 }}>
+        <div style={{ ...sectionCard, maxWidth: '900px', marginBottom: '20px', borderColor: allSectionsPassed ? 'rgba(83,74,183,0.3)' : 'rgba(0,0,0,0.08)', opacity: allSectionsPassed ? 1 : 0.55 }}>
           <div style={{ ...sectionNumber, background: 'rgba(83,74,183,0.12)', color: '#534AB7' }}>★</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '14px', fontWeight: 600 }}>Final course exam</div>
@@ -444,7 +467,7 @@ export default function CoursePage() {
   )
 }
 
-const pageStyle: React.CSSProperties = { padding: '40px', fontFamily: 'sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18' }
+const pageStyle: React.CSSProperties = { padding: '40px 5%', fontFamily: 'sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18', width: '100%' }
 const infoTile: React.CSSProperties = { background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', padding: '12px 16px', minWidth: '120px' }
 const tileLabel: React.CSSProperties = { fontSize: '11px', color: '#8A8A82', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }
 const tileValue: React.CSSProperties = { fontSize: '15px', fontWeight: 700 }
