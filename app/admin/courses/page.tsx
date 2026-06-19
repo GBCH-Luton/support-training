@@ -11,22 +11,29 @@ type Course = {
 }
 type Category = { id: string; name: string; icon: string }
 
+type SortKey = 'title' | 'category' | 'type' | 'pass_mark' | 'status'
+type SortDir = 'asc' | 'desc'
+
 export default function AdminCourses() {
   const [courses, setCourses] = useState<Course[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [sortKey, setSortKey] = useState<SortKey>('title')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   useEffect(() => {
-    async function fetchData() {
-      const { data: courseData } = await supabase.from('courses').select('*').order('title')
-      const { data: catData } = await supabase.from('categories').select('*')
-      if (courseData) setCourses(courseData)
-      if (catData) setCategories(catData)
-      setLoading(false)
-    }
     fetchData()
   }, [])
+
+  async function fetchData() {
+    const { data: courseData } = await supabase.from('courses').select('*').order('title')
+    const { data: catData } = await supabase.from('categories').select('*')
+    if (courseData) setCourses(courseData)
+    if (catData) setCategories(catData)
+    setLoading(false)
+  }
 
   async function toggleStatus(course: Course) {
     const newStatus = course.status === 'live' ? 'draft' : 'live'
@@ -36,7 +43,49 @@ export default function AdminCourses() {
     setSaving(null)
   }
 
+  async function deleteCourse(course: Course) {
+    const confirmed = confirm(
+      `Delete "${course.title}"?\n\nThis will permanently remove the course, all its sections, questions, and any staff progress records for it. This cannot be undone.`
+    )
+    if (!confirmed) return
+    setDeleting(course.id)
+    // Clean up links and dependent data first
+    await supabase.from('course_departments').delete().eq('course_id', course.id)
+    await supabase.from('enrolments').delete().eq('course_id', course.id)
+    await supabase.from('section_progress').delete().eq('course_id', course.id)
+    await supabase.from('exam_attempts').delete().eq('course_id', course.id)
+    await supabase.from('questions').delete().eq('course_id', course.id)
+    await supabase.from('course_sections').delete().eq('course_id', course.id)
+    await supabase.from('courses').delete().eq('id', course.id)
+    setCourses((prev) => prev.filter((c) => c.id !== course.id))
+    setDeleting(null)
+  }
+
   const getCat = (id: string) => categories.find((c) => c.id === id)
+
+  function changeSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  const sortedCourses = [...courses].sort((a, b) => {
+    let av: string | number = ''
+    let bv: string | number = ''
+    if (sortKey === 'title') { av = a.title.toLowerCase(); bv = b.title.toLowerCase() }
+    else if (sortKey === 'category') { av = (getCat(a.category_id)?.name || '').toLowerCase(); bv = (getCat(b.category_id)?.name || '').toLowerCase() }
+    else if (sortKey === 'type') { av = a.type; bv = b.type }
+    else if (sortKey === 'pass_mark') { av = a.pass_mark; bv = b.pass_mark }
+    else if (sortKey === 'status') { av = a.status; bv = b.status }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1
+    if (av > bv) return sortDir === 'asc' ? 1 : -1
+    return 0
+  })
+
+  const sortArrow = (key: SortKey) => sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
 
   return (
     <div>
@@ -55,16 +104,16 @@ export default function AdminCourses() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ background: '#F8F7F4', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                <th style={th}>Course</th>
-                <th style={th}>Category</th>
-                <th style={th}>Type</th>
-                <th style={th}>Pass mark</th>
-                <th style={th}>Status</th>
+                <th style={thClick} onClick={() => changeSort('title')}>Course{sortArrow('title')}</th>
+                <th style={thClick} onClick={() => changeSort('category')}>Category{sortArrow('category')}</th>
+                <th style={thClick} onClick={() => changeSort('type')}>Type{sortArrow('type')}</th>
+                <th style={thClick} onClick={() => changeSort('pass_mark')}>Pass mark{sortArrow('pass_mark')}</th>
+                <th style={thClick} onClick={() => changeSort('status')}>Status{sortArrow('status')}</th>
                 <th style={th}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {courses.map((course) => {
+              {sortedCourses.map((course) => {
                 const cat = getCat(course.category_id)
                 const isLive = course.status === 'live'
                 return (
@@ -74,13 +123,11 @@ export default function AdminCourses() {
                         <span style={{ fontSize: '20px' }}>{course.icon}</span>
                         <div>
                           <div style={{ fontWeight: 600, color: '#1A1A18' }}>{course.title}</div>
-                          <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '2px' }}>{course.description?.slice(0, 60)}...</div>
+                          <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '2px' }}>{course.description?.slice(0, 60)}{course.description && course.description.length > 60 ? '...' : ''}</div>
                         </div>
                       </div>
                     </td>
-                    <td style={td}>
-                      <span style={{ fontSize: '12px', color: '#5A5A55' }}>{cat?.icon} {cat?.name || '—'}</span>
-                    </td>
+                    <td style={td}><span style={{ fontSize: '12px', color: '#5A5A55' }}>{cat?.icon} {cat?.name || '—'}</span></td>
                     <td style={td}>
                       <span style={{ padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: course.type === 'mandatory' ? 'rgba(153,60,29,0.1)' : 'rgba(45,91,227,0.1)', color: course.type === 'mandatory' ? '#993C1D' : '#2D5BE3' }}>
                         {course.type === 'mandatory' ? 'Mandatory' : 'Optional'}
@@ -88,18 +135,21 @@ export default function AdminCourses() {
                     </td>
                     <td style={td}>{course.pass_mark}%</td>
                     <td style={td}>
-                      <button
-                        onClick={() => toggleStatus(course)}
-                        disabled={saving === course.id}
-                        style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer', background: isLive ? 'rgba(15,110,86,0.1)' : 'rgba(0,0,0,0.06)', color: isLive ? '#0F6E56' : '#8A8A82' }}
-                      >
+                      <button onClick={() => toggleStatus(course)} disabled={saving === course.id}
+                        style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer', background: isLive ? 'rgba(15,110,86,0.1)' : 'rgba(0,0,0,0.06)', color: isLive ? '#0F6E56' : '#8A8A82' }}>
                         {saving === course.id ? '...' : isLive ? '🟢 Live' : '⬜ Draft'}
                       </button>
                     </td>
                     <td style={td}>
-                      <Link href={`/admin/builder?id=${course.id}`} style={{ padding: '5px 12px', background: 'rgba(45,91,227,0.08)', color: '#2D5BE3', borderRadius: '6px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>
-                        ✏️ Edit
-                      </Link>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <Link href={`/admin/builder?id=${course.id}`} style={{ padding: '5px 12px', background: 'rgba(45,91,227,0.08)', color: '#2D5BE3', borderRadius: '6px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>
+                          ✏️ Edit
+                        </Link>
+                        <button onClick={() => deleteCourse(course)} disabled={deleting === course.id}
+                          style={{ padding: '5px 12px', background: 'rgba(153,60,29,0.08)', color: '#993C1D', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                          {deleting === course.id ? 'Deleting...' : '🗑 Delete'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -113,4 +163,5 @@ export default function AdminCourses() {
 }
 
 const th: React.CSSProperties = { textAlign: 'left', padding: '10px 16px', fontSize: '11px', fontWeight: 700, color: '#8A8A82', textTransform: 'uppercase', letterSpacing: '0.05em' }
+const thClick: React.CSSProperties = { ...th, cursor: 'pointer', userSelect: 'none' }
 const td: React.CSSProperties = { padding: '12px 16px', verticalAlign: 'middle', color: '#1A1A18' }
