@@ -18,6 +18,7 @@ export default function Home() {
   const [activeCat, setActiveCat] = useState('all')
   const [loading, setLoading] = useState(true)
 
+  // Redirect to login if not signed in
   useEffect(() => {
     if (!userLoading && !user) router.push('/login')
   }, [user, userLoading, router])
@@ -65,19 +66,21 @@ export default function Home() {
 
   return (
     <div style={{ padding: '40px 5%', fontFamily: 'sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18', width: '100%' }}>
+
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <h1>Courses</h1>
+        <h1>📚 All Courses</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {user.role === 'admin' && (
             <Link href="/admin/dashboard" style={{ padding: '7px 14px', background: 'rgba(133,79,11,0.1)', color: '#854F0B', borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
-              Admin panel
+              ⚙️ Admin panel
             </Link>
           )}
           <Link href="/progress" style={{ padding: '7px 14px', background: 'rgba(45,91,227,0.08)', color: '#2D5BE3', borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
-            My progress
+            📊 My progress
           </Link>
           <div style={{ fontSize: '13px', color: '#5A5A55' }}>
-            <strong>{user.name}</strong>
+            👤 <strong>{user.name}</strong>
           </div>
           <button onClick={handleSignOut}
             style={{ padding: '7px 14px', background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '8px', fontSize: '13px', color: '#5A5A55', cursor: 'pointer' }}>
@@ -86,6 +89,7 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Category pills */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <button onClick={() => setActiveCat('all')} style={pillStyle(activeCat === 'all')}>All</button>
         {categories.map((cat) => (
@@ -97,7 +101,9 @@ export default function Home() {
         <p>Loading courses...</p>
       ) : visibleCourses.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>📭</div>
           <p style={{ color: '#8A8A82', fontSize: '15px' }}>No courses available for your department yet.</p>
+          <p style={{ color: '#8A8A82', fontSize: '13px', marginTop: '6px' }}>Ask your admin to assign courses to your department.</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
