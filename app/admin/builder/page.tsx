@@ -18,6 +18,9 @@ function BuilderInner() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [currentCourseId, setCurrentCourseId] = useState<string | null>(courseId)
+  const [allDepartments, setAllDepartments] = useState<{ id: string; name: string; icon: string }[]>([])
+  const [courseDepts, setCourseDepts] = useState<string[]>([])
+  const [finalExamCount, setFinalExamCount] = useState(0)
 
   // Course form fields
   const [title, setTitle] = useState('')
@@ -32,6 +35,8 @@ function BuilderInner() {
   useEffect(() => {
     async function fetchData() {
       const { data: catData } = await supabase.from('categories').select('*').order('sort_order')
+      const { data: deptData } = await supabase.from('departments').select('id, name, icon').order('sort_order')
+      if (deptData) setAllDepartments(deptData)
       if (catData) { setCategories(catData); if (!categoryId && catData.length > 0) setCategoryId(catData[0].id) }
 
       if (courseId) {
@@ -40,11 +45,25 @@ function BuilderInner() {
         if (course) { setTitle(course.title); setDescription(course.description || ''); setCategoryId(course.category_id); setType(course.type); setStatus(course.status); setPassMark(course.pass_mark); setReminderCycle(course.reminder_cycle || 6); setIcon(course.icon || '📖') }
         const { data: secData } = await supabase.from('course_sections').select('*').eq('course_id', courseId).order('sort_order')
         if (secData) setSections(secData)
+          
+          const { data: feData } = await supabase.from('questions').select('id').eq('course_id', courseId).eq('quiz_type', 'final_exam')
+        setFinalExamCount(feData?.length || 0)
         setLoading(false)
       }
     }
     fetchData()
   }, [courseId])
+
+  async function toggleDept(deptId: string) {
+    if (!currentCourseId) { alert('Save the course first'); return }
+    if (courseDepts.includes(deptId)) {
+      await supabase.from('course_departments').delete().eq('course_id', currentCourseId).eq('department_id', deptId)
+      setCourseDepts((prev) => prev.filter((d) => d !== deptId))
+    } else {
+      await supabase.from('course_departments').insert({ course_id: currentCourseId, department_id: deptId })
+      setCourseDepts((prev) => [...prev, deptId])
+    }
+  }
 
   async function saveCourse() {
     if (!title.trim()) { alert('Please enter a course title'); return }
@@ -114,8 +133,8 @@ function BuilderInner() {
             <input style={input} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Fire Safety Essentials" />
           </div>
           <div style={fg}>
-            <label style={label}>Icon (emoji)</label>
-            <input style={input} value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="e.g. 🔥" />
+            <label style={label}>Icon</label>
+            <EmojiPicker value={icon} onChange={setIcon} />
           </div>
         </div>
         <div style={fg}>
@@ -163,6 +182,45 @@ function BuilderInner() {
           {saving ? 'Saving...' : saved ? '✓ Saved!' : currentCourseId ? 'Save changes' : 'Create course'}
         </button>
       </div>
+{/* Final exam status */}
+{currentCourseId && (
+        <div style={{ ...card, background: finalExamCount > 0 ? 'rgba(15,110,86,0.05)' : 'rgba(133,79,11,0.06)', border: finalExamCount > 0 ? '1px solid rgba(15,110,86,0.2)' : '1px solid rgba(133,79,11,0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '22px' }}>{finalExamCount > 0 ? '✅' : '⚠️'}</span>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: finalExamCount > 0 ? '#0F6E56' : '#854F0B' }}>
+                {finalExamCount > 0 ? `Final exam ready (${finalExamCount} questions)` : 'No final exam yet'}
+              </div>
+              <div style={{ fontSize: '12px', color: '#5A5A55', marginTop: '2px' }}>
+                {finalExamCount > 0
+                  ? 'This course can be completed and counts toward staff KPI.'
+                  : 'A course needs final exam questions to count toward completion and KPI. Add final exam questions via the 📝 Questions link on any section.'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+{/* Departments */}
+{currentCourseId && (
+        <div style={card}>
+          <div style={cardTitle}>Available to departments</div>
+          <p style={{ fontSize: '13px', color: '#8A8A82', marginBottom: '14px' }}>Select which departments can see this course. Staff only see courses for their department(s).</p>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {allDepartments.map((dept) => {
+              const selected = courseDepts.includes(dept.id)
+              return (
+                <button key={dept.id} type="button" onClick={() => toggleDept(dept.id)}
+                  style={{ padding: '8px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: selected ? '1.5px solid #0F6E56' : '1.5px solid rgba(0,0,0,0.14)', background: selected ? 'rgba(15,110,86,0.08)' : '#fff', color: selected ? '#0F6E56' : '#5A5A55' }}>
+                  {selected ? '✓ ' : ''}{dept.icon} {dept.name}
+                </button>
+              )
+            })}
+          </div>
+          {courseDepts.length === 0 && (
+            <p style={{ fontSize: '12px', color: '#993C1D', marginTop: '10px' }}>⚠️ No departments selected — this course won&apos;t appear for any staff.</p>
+          )}
+        </div>
+      )}
 
       {/* Sections */}
       {currentCourseId && (
@@ -287,7 +345,49 @@ function SectionQuestionCount({ sectionId }: { sectionId: string }) {
       </div>
     )
   }
-
+  const EMOJI_GROUPS = [
+    { label: 'Health & Care', emojis: ['🏥','💊','🩺','🩹','❤️','🧬','🦺','🚑','🧪','💉','🫀','🧠'] },
+    { label: 'Safety', emojis: ['🔥','⚠️','🚨','🛡️','🔒','🪖','🧯','🚒','⛑️','🔐','🚧','📵'] },
+    { label: 'People & Teams', emojis: ['👥','🧑‍⚕️','👔','👤','🤝','👨‍👩‍👧','🧑‍🤝‍🧑','👩‍💼','👨‍💼','🫂','🙋','👋'] },
+    { label: 'Learning', emojis: ['📚','📖','✏️','🎓','📝','📋','📄','🗒️','📓','🏫','💡','🔍'] },
+    { label: 'Work & Office', emojis: ['💼','🖥️','📊','📈','🗂️','📌','📎','🖊️','📅','🗓️','⏰','📞'] },
+    { label: 'Mind & Wellbeing', emojis: ['🧘','😊','🌱','🌟','💚','🕊️','🌈','☀️','🫶','💬','🤲','🌸'] },
+    { label: 'Buildings & Places', emojis: ['🏢','🏠','🏗️','🏛️','🏨','🏪','🏬','🏭','🏡','🌍','📍','🗺️'] },
+    { label: 'Misc', emojis: ['⭐','✅','❌','🔔','🎯','🏆','🎖️','🔑','💡','🔧','⚙️','🧩'] },
+  ]
+  
+  function EmojiPicker({ value, onChange }: { value: string; onChange: (e: string) => void }) {
+    const [open, setOpen] = useState(false)
+    return (
+      <div style={{ position: 'relative' }}>
+        <button type="button" onClick={() => setOpen(!open)}
+          style={{ padding: '8px 12px', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '8px', background: '#F8F7F4', fontSize: '20px', cursor: 'pointer', minWidth: '52px' }}>
+          {value || '📖'}
+        </button>
+        {open && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '12px', padding: '12px', width: '280px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: '4px' }}>
+            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {EMOJI_GROUPS.map((group) => (
+                <div key={group.label} style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#8A8A82', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>{group.label}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                    {group.emojis.map((emoji) => (
+                      <button key={emoji} type="button" onClick={() => { onChange(emoji); setOpen(false) }}
+                        style={{ width: '34px', height: '34px', border: value === emoji ? '2px solid #2D5BE3' : '1px solid rgba(0,0,0,0.08)', borderRadius: '6px', background: value === emoji ? 'rgba(45,91,227,0.08)' : '#F8F7F4', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={() => setOpen(false)}
+              style={{ marginTop: '8px', width: '100%', padding: '6px', background: 'rgba(0,0,0,0.04)', border: 'none', borderRadius: '6px', fontSize: '12px', color: '#5A5A55', cursor: 'pointer' }}>Close</button>
+          </div>
+        )}
+      </div>
+    )
+  }
   
 const card: React.CSSProperties = { background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '20px', marginBottom: '16px' }
 const cardTitle: React.CSSProperties = { fontSize: '15px', fontWeight: 700, color: '#1A1A18', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }
