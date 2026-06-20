@@ -135,21 +135,21 @@ export default function CoursePage() {
     setExamResult({ score, passed })
   }
 
+  // ===== FINAL EXAM =====
   if (inFinalExam) {
     if (examResult) {
       if (examResult.passed) {
         return (
           <div style={pageStyle}>
-            <div style={{ maxWidth: '520px', margin: '0 auto', textAlign: 'center', paddingTop: '20px' }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '20px', padding: '32px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-                <div style={{ width: '48px', height: '48px', background: '#2D5BE3', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 700, margin: '0 auto 14px' }}>ST</div>
-                <div style={{ fontSize: '11px', color: '#8A8A82', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>Support Training Platform</div>
-                <div style={{ fontSize: '13px', color: '#5A5A55', marginBottom: '4px' }}>This certifies that {user.name} has completed</div>
-                <div style={{ fontSize: '20px', fontWeight: 700, marginBottom: '18px' }}>{course.title}</div>
-                <div style={{ width: '58px', height: '58px', borderRadius: '50%', background: 'linear-gradient(135deg,#0F6E56,#2BA870)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '20px', color: '#fff' }}>✓</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F6E56' }}>Score: {examResult.score}%</div>
+            <div style={{ maxWidth: '480px', margin: '0 auto', textAlign: 'center', paddingTop: '20px' }}>
+              <div style={{ background: 'linear-gradient(160deg,#FFFFFF,#F4F6FF)', border: '1px solid rgba(45,91,227,0.15)', borderRadius: '24px', padding: '36px 28px', boxShadow: '0 8px 30px rgba(45,91,227,0.12)' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg,#3FC9A0,#0F6E56)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', fontSize: '30px', color: '#fff' }}>🏆</div>
+                <div style={{ fontSize: '11px', color: '#8A8A82', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>Certificate of Completion</div>
+                <div style={{ fontSize: '14px', color: '#5A5A55', marginBottom: '6px' }}>This certifies that {user.name} has completed</div>
+                <div style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px' }}>{course.title}</div>
+                <div style={{ display: 'inline-block', padding: '8px 18px', borderRadius: '20px', background: 'rgba(15,110,86,0.1)', color: '#0F6E56', fontSize: '15px', fontWeight: 700 }}>Score: {examResult.score}%</div>
               </div>
-              <Link href="/" style={{ ...startBtn, marginTop: '20px', textDecoration: 'none', display: 'inline-block' }}>Back to courses</Link>
+              <Link href="/" style={{ ...primaryBtn, marginTop: '20px', textDecoration: 'none', display: 'inline-block' }}>Back to courses</Link>
             </div>
           </div>
         )
@@ -162,29 +162,31 @@ export default function CoursePage() {
       }).filter(Boolean) as { section: Section; pct: number }[]
       return (
         <div style={pageStyle}>
-          <div style={{ maxWidth: '900px' }}>
+          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
             <div style={{ fontSize: '48px', marginBottom: '8px' }}>📊</div>
-            <h1 style={{ color: '#993C1D', marginBottom: '6px' }}>Not passed — {examResult.score}%</h1>
+            <h1 style={{ color: '#993C1D', marginBottom: '6px', fontSize: '24px' }}>Not passed — {examResult.score}%</h1>
             <p style={{ color: '#5A5A55', marginBottom: '24px' }}>You need {course.pass_mark}%. Here is how you did per section.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
               {bySection.map((row) => {
                 const colour = row.pct >= 80 ? '#0F6E56' : row.pct >= 50 ? '#854F0B' : '#993C1D'
                 const lbl = row.pct >= 80 ? 'Strong' : row.pct >= 50 ? 'Review' : 'Needs work'
                 return (
-                  <div key={row.section.id} style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', padding: '14px' }}>
+                  <div key={row.section.id} style={cardBox}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <span style={{ fontSize: '14px', fontWeight: 600 }}>{row.section.title}</span>
                       <span style={{ fontSize: '13px', fontWeight: 700, color: colour }}>{row.pct}% · {lbl}</span>
                     </div>
-                    <div style={{ height: '6px', background: '#E4E2DC', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: `${row.pct}%`, height: '100%', background: colour }} />
+                    <div style={{ height: '8px', background: '#EDEBE5', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${row.pct}%`, height: '100%', background: colour, borderRadius: '4px' }} />
                     </div>
                   </div>
                 )
               })}
             </div>
-            <button onClick={() => { setExamAnswers({}); setExamResult(null); setExamQ(0) }} style={startBtn}>Retake final exam</button>
-            <button onClick={() => { setInFinalExam(false); setExamAnswers({}); setExamResult(null); setExamQ(0) }} style={{ ...secondaryBtn, marginLeft: '10px' }}>Back to course</button>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button onClick={() => { setExamAnswers({}); setExamResult(null); setExamQ(0) }} style={primaryBtn}>Retake final exam</button>
+              <button onClick={() => { setInFinalExam(false); setExamAnswers({}); setExamResult(null); setExamQ(0) }} style={secondaryBtn}>Back to course</button>
+            </div>
           </div>
         </div>
       )
@@ -193,33 +195,32 @@ export default function CoursePage() {
     const isLast = examQ === finalQuestions.length - 1
     return (
       <div style={pageStyle}>
-        <button onClick={() => { setInFinalExam(false); setExamAnswers({}); setExamQ(0) }} style={backBtn}>Back to course overview</button>
-        <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '20px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Final exam · Question {examQ + 1} of {finalQuestions.length} · Pass {course.pass_mark}%</div>
-        <div style={{ height: '4px', background: '#E4E2DC', borderRadius: '2px', maxWidth: '900px', marginBottom: '24px', overflow: 'hidden' }}>
-          <div style={{ width: `${(examQ / finalQuestions.length) * 100}%`, height: '100%', background: '#534AB7', transition: 'width .3s' }} />
-        </div>
-        <div style={{ maxWidth: '900px' }}>
-          <div style={{ fontSize: '17px', fontWeight: 700, marginBottom: '18px' }}>{q.question_text}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', marginBottom: '24px' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+          <button onClick={() => { setInFinalExam(false); setExamAnswers({}); setExamQ(0) }} style={backBtn}>← Back to course</button>
+          <div style={{ marginTop: '16px', marginBottom: '6px', display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(83,74,183,0.1)', color: '#534AB7', fontSize: '12px', fontWeight: 600 }}>★ Final exam · {examQ + 1} of {finalQuestions.length} · Pass {course.pass_mark}%</div>
+          <div style={{ height: '6px', background: '#EDEBE5', borderRadius: '3px', marginBottom: '24px', overflow: 'hidden', marginTop: '10px' }}>
+            <div style={{ width: `${(examQ / finalQuestions.length) * 100}%`, height: '100%', background: 'linear-gradient(90deg,#8F86E0,#534AB7)', transition: 'width .3s', borderRadius: '3px' }} />
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', lineHeight: '1.4' }}>{q.question_text}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
             {(['a', 'b', 'c', 'd'] as const).map((letter) => {
               const optText = q[`option_${letter}` as keyof Question] as string
               if (!optText) return null
               const selected = examAnswers[q.id] === letter
               return (
-                <button key={letter} onClick={() => setExamAnswers({ ...examAnswers, [q.id]: letter })}
-                  style={{ display: 'flex', alignItems: 'center', gap: '11px', textAlign: 'left', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', border: selected ? '1.5px solid #534AB7' : '1.5px solid rgba(0,0,0,0.14)', background: selected ? 'rgba(83,74,183,0.08)' : '#FFFFFF', fontSize: '14px', color: '#1A1A18' }}>
-                  <span style={{ width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0, border: selected ? '2px solid #534AB7' : '2px solid #C4C4BE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#534AB7' }}>{selected ? '●' : letter.toUpperCase()}</span>
+                <button key={letter} onClick={() => setExamAnswers({ ...examAnswers, [q.id]: letter })} style={optBtn(selected, '#534AB7')}>
+                  <span style={optCircle(selected, '#534AB7')}>{selected ? '●' : letter.toUpperCase()}</span>
                   {optText}
                 </button>
               )
             })}
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            {examQ > 0 && <button onClick={() => setExamQ(examQ - 1)} style={{ ...secondaryBtn, marginTop: 0 }}>Back</button>}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {examQ > 0 && <button onClick={() => setExamQ(examQ - 1)} style={secondaryBtn}>← Back</button>}
             {!isLast ? (
-              <button onClick={() => setExamQ(examQ + 1)} disabled={!examAnswers[q.id]} style={{ ...startBtn, marginTop: 0, background: '#534AB7', opacity: !examAnswers[q.id] ? 0.4 : 1, cursor: !examAnswers[q.id] ? 'not-allowed' : 'pointer' }}>Next</button>
+              <button onClick={() => setExamQ(examQ + 1)} disabled={!examAnswers[q.id]} style={{ ...primaryBtn, background: 'linear-gradient(135deg,#8F86E0,#534AB7)', opacity: !examAnswers[q.id] ? 0.4 : 1, cursor: !examAnswers[q.id] ? 'not-allowed' : 'pointer' }}>Next →</button>
             ) : (
-              <button onClick={submitExam} disabled={finalQuestions.some((qq) => !examAnswers[qq.id])} style={{ ...startBtn, marginTop: 0, background: '#534AB7', opacity: finalQuestions.some((qq) => !examAnswers[qq.id]) ? 0.4 : 1, cursor: finalQuestions.some((qq) => !examAnswers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit exam</button>
+              <button onClick={submitExam} disabled={finalQuestions.some((qq) => !examAnswers[qq.id])} style={{ ...primaryBtn, background: 'linear-gradient(135deg,#8F86E0,#534AB7)', opacity: finalQuestions.some((qq) => !examAnswers[qq.id]) ? 0.4 : 1, cursor: finalQuestions.some((qq) => !examAnswers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit exam</button>
             )}
             <span style={{ fontSize: '12px', color: '#8A8A82', marginLeft: 'auto' }}>{finalQuestions.filter((qq) => examAnswers[qq.id]).length}/{finalQuestions.length} answered</span>
           </div>
@@ -228,23 +229,25 @@ export default function CoursePage() {
     )
   }
 
+  // ===== SECTION VIEWER =====
   if (started && sections.length > 0) {
     const section = sections[currentIndex]
     const qs = sectionChecks(section.id)
+
     if (showQuiz) {
       if (quizResult) {
         return (
           <div style={pageStyle}>
-            <div style={{ maxWidth: '900px', textAlign: 'center', paddingTop: '40px' }}>
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>{quizResult.passed ? '🎉' : '😔'}</div>
-              <h1 style={{ color: quizResult.passed ? '#0F6E56' : '#993C1D', marginBottom: '8px' }}>{quizResult.passed ? `Passed! ${quizResult.score}%` : `Not quite — ${quizResult.score}%`}</h1>
+            <div style={{ maxWidth: '520px', margin: '0 auto', textAlign: 'center', paddingTop: '30px' }}>
+              <div style={{ fontSize: '56px', marginBottom: '12px' }}>{quizResult.passed ? '🎉' : '😔'}</div>
+              <h1 style={{ color: quizResult.passed ? '#0F6E56' : '#993C1D', marginBottom: '8px', fontSize: '24px' }}>{quizResult.passed ? `Passed! ${quizResult.score}%` : `Not quite — ${quizResult.score}%`}</h1>
               <p style={{ color: '#5A5A55', marginBottom: '24px' }}>{quizResult.passed ? 'Great work — saved to your record.' : `You need ${course.pass_mark}% to pass. Review and try again.`}</p>
               {quizResult.passed ? (
-                <button onClick={moveNext} style={startBtn}>{currentIndex < sections.length - 1 ? 'Continue to next section' : 'Finish sections'}</button>
+                <button onClick={moveNext} style={primaryBtn}>{currentIndex < sections.length - 1 ? 'Continue →' : 'Finish sections'}</button>
               ) : (
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button onClick={() => setShowQuiz(false)} style={secondaryBtn}>Review section</button>
-                  <button onClick={goToQuiz} style={startBtn}>Try again</button>
+                  <button onClick={goToQuiz} style={primaryBtn}>Try again</button>
                 </div>
               )}
             </div>
@@ -255,35 +258,34 @@ export default function CoursePage() {
       const isLast = quizQ === qs.length - 1
       return (
         <div style={pageStyle}>
-          <button onClick={() => setShowQuiz(false)} style={backBtn}>Back to section</button>
-          <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '20px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Section check · Question {quizQ + 1} of {qs.length}</div>
-          <div style={{ height: '4px', background: '#E4E2DC', borderRadius: '2px', maxWidth: '900px', marginBottom: '24px', overflow: 'hidden' }}>
-            <div style={{ width: `${(quizQ / qs.length) * 100}%`, height: '100%', background: '#2D5BE3', transition: 'width .3s' }} />
-          </div>
-          <div style={{ maxWidth: '900px' }}>
-            <div style={{ fontSize: '17px', fontWeight: 700, marginBottom: '18px' }}>{cq.question_text}</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', marginBottom: '24px' }}>
+          <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+            <button onClick={() => setShowQuiz(false)} style={backBtn}>← Back to section</button>
+            <div style={{ marginTop: '16px', marginBottom: '10px', display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(45,91,227,0.1)', color: '#2D5BE3', fontSize: '12px', fontWeight: 600 }}>📝 Section check · {quizQ + 1} of {qs.length}</div>
+            <div style={{ height: '6px', background: '#EDEBE5', borderRadius: '3px', marginBottom: '24px', overflow: 'hidden' }}>
+              <div style={{ width: `${(quizQ / qs.length) * 100}%`, height: '100%', background: 'linear-gradient(90deg,#6FA0F5,#2D5BE3)', transition: 'width .3s', borderRadius: '3px' }} />
+            </div>
+            <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', lineHeight: '1.4' }}>{cq.question_text}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
               {(['a', 'b', 'c', 'd'] as const).map((letter) => {
                 const optText = cq[`option_${letter}` as keyof Question] as string
                 if (!optText) return null
                 const selected = answers[cq.id] === letter
                 return (
-                  <button key={letter} onClick={() => setAnswers({ ...answers, [cq.id]: letter })}
-                    style={{ display: 'flex', alignItems: 'center', gap: '11px', textAlign: 'left', padding: '12px 15px', borderRadius: '12px', cursor: 'pointer', border: selected ? '1.5px solid #2D5BE3' : '1.5px solid rgba(0,0,0,0.14)', background: selected ? 'rgba(45,91,227,0.08)' : '#FFFFFF', fontSize: '14px', color: '#1A1A18' }}>
-                    <span style={{ width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0, border: selected ? '2px solid #2D5BE3' : '2px solid #C4C4BE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#2D5BE3' }}>{selected ? '●' : letter.toUpperCase()}</span>
+                  <button key={letter} onClick={() => setAnswers({ ...answers, [cq.id]: letter })} style={optBtn(selected, '#2D5BE3')}>
+                    <span style={optCircle(selected, '#2D5BE3')}>{selected ? '●' : letter.toUpperCase()}</span>
                     {optText}
                   </button>
                 )
               })}
             </div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              {quizQ > 0 && <button onClick={() => setQuizQ(quizQ - 1)} style={{ ...secondaryBtn, marginTop: 0 }}>Back</button>}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {quizQ > 0 && <button onClick={() => setQuizQ(quizQ - 1)} style={secondaryBtn}>← Back</button>}
               {!isLast ? (
-                <button onClick={() => setQuizQ(quizQ + 1)} disabled={!answers[cq.id]} style={{ ...startBtn, marginTop: 0, opacity: !answers[cq.id] ? 0.4 : 1, cursor: !answers[cq.id] ? 'not-allowed' : 'pointer' }}>Next</button>
+                <button onClick={() => setQuizQ(quizQ + 1)} disabled={!answers[cq.id]} style={{ ...primaryBtn, opacity: !answers[cq.id] ? 0.4 : 1, cursor: !answers[cq.id] ? 'not-allowed' : 'pointer' }}>Next →</button>
               ) : (
-                <button onClick={submitQuiz} disabled={qs.some((qq) => !answers[qq.id])} style={{ ...startBtn, marginTop: 0, opacity: qs.some((qq) => !answers[qq.id]) ? 0.4 : 1, cursor: qs.some((qq) => !answers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit check</button>
+                <button onClick={submitQuiz} disabled={qs.some((qq) => !answers[qq.id])} style={{ ...primaryBtn, opacity: qs.some((qq) => !answers[qq.id]) ? 0.4 : 1, cursor: qs.some((qq) => !answers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit check</button>
               )}
-              <span style={{ fontSize: '12px', color: '#8A8A82', marginLeft: 'auto' }}>{qs.filter((qq) => answers[qq.id]).length}/{qs.length} answered</span>
+              <span style={{ fontSize: '12px', color: '#8A8A82', marginLeft: 'auto' }}>{qs.filter((qq) => answers[qq.id]).length}/{qs.length}</span>
             </div>
           </div>
         </div>
@@ -292,46 +294,72 @@ export default function CoursePage() {
 
     if (section.type === 'slides') {
       const slideList = (section.slide_urls || '').split(',').map((s) => s.trim()).filter(Boolean)
+      const isPptx = slideList.length === 1 && slideList[0].toLowerCase().endsWith('.pptx')
+
+      if (isPptx) {
+        const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(slideList[0])}`
+        const seen = slidesSeen[section.id]
+        return (
+          <div style={pageStyle}>
+            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+              <button onClick={() => setStarted(false)} style={backBtn}>← Back to overview</button>
+              <div style={{ marginTop: '16px', marginBottom: '6px', display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(83,74,183,0.1)', color: '#534AB7', fontSize: '12px', fontWeight: 600 }}>🖼️ Slides · Section {currentIndex + 1} of {sections.length}</div>
+              <h1 style={{ marginBottom: '16px', fontSize: '22px' }}>{section.title}</h1>
+              <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000', marginBottom: '16px' }}>
+                <iframe src={officeUrl} style={{ width: '100%', height: '500px', border: 'none', display: 'block' }} allowFullScreen />
+              </div>
+              <p style={{ fontSize: '13px', color: '#8A8A82', marginBottom: '16px' }}>Use the arrows in the slide viewer above to move through the slides. When you have viewed them all, mark this section complete.</p>
+              {!seen ? (
+                <button onClick={() => setSlidesSeen((s) => ({ ...s, [section.id]: true }))} style={primaryBtn}>✓ I confirm I have viewed all the slides</button>
+              ) : (
+                <button onClick={async () => { if (qs.length > 0) goToQuiz(); else { setPassedSections((p) => ({ ...p, [section.id]: true })); await saveSectionProgress(section.id, 100, true); moveNext() } }} style={{ ...primaryBtn, background: 'linear-gradient(135deg,#3FC9A0,#0F6E56)' }}>
+                  {qs.length > 0 ? 'Continue to section check →' : (currentIndex < sections.length - 1 ? 'Next section →' : 'Finish sections')}
+                </button>
+              )}
+            </div>
+          </div>
+        )
+      }
+
       const isLastSlide = slideIndex === slideList.length - 1
       const allSeen = slidesSeen[section.id]
       return (
         <div style={pageStyle}>
           {slideFullscreen && (
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-              <button onClick={() => setSlideFullscreen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>✕ Close</button>
-              <img src={slideList[slideIndex]} alt={`Slide ${slideIndex + 1}`} style={{ maxWidth: '95%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '8px' }} />
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+              <button onClick={() => setSlideFullscreen(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 18px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>✕ Close</button>
+              <img src={slideList[slideIndex]} alt={`Slide ${slideIndex + 1}`} style={{ maxWidth: '96%', maxHeight: '78vh', objectFit: 'contain', borderRadius: '10px' }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
-                <button onClick={() => setSlideIndex(Math.max(0, slideIndex - 1))} disabled={slideIndex === 0} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 18px', fontSize: '15px', fontWeight: 600, cursor: slideIndex === 0 ? 'not-allowed' : 'pointer', opacity: slideIndex === 0 ? 0.4 : 1 }}>Previous</button>
-                <span style={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Slide {slideIndex + 1} of {slideList.length}</span>
-                <button onClick={() => { if (slideIndex < slideList.length - 1) setSlideIndex(slideIndex + 1) }} disabled={slideIndex === slideList.length - 1} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 18px', fontSize: '15px', fontWeight: 600, cursor: slideIndex === slideList.length - 1 ? 'not-allowed' : 'pointer', opacity: slideIndex === slideList.length - 1 ? 0.4 : 1 }}>Next</button>
+                <button onClick={() => setSlideIndex(Math.max(0, slideIndex - 1))} disabled={slideIndex === 0} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: '10px', padding: '12px 20px', fontSize: '15px', fontWeight: 600, cursor: slideIndex === 0 ? 'not-allowed' : 'pointer', opacity: slideIndex === 0 ? 0.4 : 1 }}>← Prev</button>
+                <span style={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>{slideIndex + 1} / {slideList.length}</span>
+                <button onClick={() => { if (slideIndex < slideList.length - 1) setSlideIndex(slideIndex + 1) }} disabled={slideIndex === slideList.length - 1} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', borderRadius: '10px', padding: '12px 20px', fontSize: '15px', fontWeight: 600, cursor: slideIndex === slideList.length - 1 ? 'not-allowed' : 'pointer', opacity: slideIndex === slideList.length - 1 ? 0.4 : 1 }}>Next →</button>
               </div>
             </div>
           )}
-          <button onClick={() => setStarted(false)} style={backBtn}>Back to course overview</button>
-          <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '20px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Slides · Section {currentIndex + 1} of {sections.length}</div>
-          <h1 style={{ marginBottom: '18px' }}>{section.title}</h1>
-          <div style={{ maxWidth: '100%' }}>
-            <div style={{ position: 'relative', background: '#000', borderRadius: '12px', overflow: 'hidden', marginBottom: '14px' }}>
-              <img src={slideList[slideIndex]} alt={`Slide ${slideIndex + 1}`} style={{ width: '100%', maxHeight: '420px', objectFit: 'contain', display: 'block' }} />
-              <button onClick={() => setSlideFullscreen(true)} style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>⛶ Fullscreen</button>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <button onClick={() => setStarted(false)} style={backBtn}>← Back to overview</button>
+            <div style={{ marginTop: '16px', marginBottom: '6px', display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(83,74,183,0.1)', color: '#534AB7', fontSize: '12px', fontWeight: 600 }}>🖼️ Slides · Section {currentIndex + 1} of {sections.length}</div>
+            <h1 style={{ marginBottom: '16px', fontSize: '22px' }}>{section.title}</h1>
+            <div style={{ position: 'relative', background: '#000', borderRadius: '16px', overflow: 'hidden', marginBottom: '14px' }}>
+              <img src={slideList[slideIndex]} alt={`Slide ${slideIndex + 1}`} style={{ width: '100%', maxHeight: '440px', objectFit: 'contain', display: 'block' }} />
+              <button onClick={() => setSlideFullscreen(true)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '10px', padding: '8px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>⛶ Fullscreen</button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-              <button onClick={() => setSlideIndex(Math.max(0, slideIndex - 1))} disabled={slideIndex === 0} style={{ ...secondaryBtn, marginTop: 0, opacity: slideIndex === 0 ? 0.4 : 1, cursor: slideIndex === 0 ? 'not-allowed' : 'pointer' }}>Previous</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+              <button onClick={() => setSlideIndex(Math.max(0, slideIndex - 1))} disabled={slideIndex === 0} style={{ ...secondaryBtn, opacity: slideIndex === 0 ? 0.4 : 1, cursor: slideIndex === 0 ? 'not-allowed' : 'pointer' }}>← Prev</button>
               <span style={{ fontSize: '13px', color: '#5A5A55', fontWeight: 600 }}>Slide {slideIndex + 1} of {slideList.length}</span>
               {!isLastSlide ? (
-                <button onClick={() => setSlideIndex(slideIndex + 1)} style={{ ...startBtn, marginTop: 0 }}>Next</button>
+                <button onClick={() => setSlideIndex(slideIndex + 1)} style={primaryBtn}>Next →</button>
               ) : (
-                <button onClick={() => setSlidesSeen((s) => ({ ...s, [section.id]: true }))} style={{ ...startBtn, marginTop: 0, background: allSeen ? '#0F6E56' : '#2D5BE3' }}>{allSeen ? '✓ All slides viewed' : 'Mark slides as viewed'}</button>
+                <button onClick={() => setSlidesSeen((s) => ({ ...s, [section.id]: true }))} style={{ ...primaryBtn, background: allSeen ? 'linear-gradient(135deg,#3FC9A0,#0F6E56)' : undefined }}>{allSeen ? '✓ Viewed' : 'Mark as viewed'}</button>
               )}
-              <div style={{ display: 'flex', gap: '5px', marginLeft: 'auto' }}>
-                {slideList.map((_, i) => (<div key={i} style={{ width: '8px', height: '8px', borderRadius: '50%', background: i === slideIndex ? '#2D5BE3' : i < slideIndex || allSeen ? '#0F6E56' : '#D0CEC8' }} />))}
+              <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
+                {slideList.map((_, i) => (<div key={i} style={{ width: '9px', height: '9px', borderRadius: '50%', background: i === slideIndex ? '#2D5BE3' : i < slideIndex || allSeen ? '#0F6E56' : '#D0CEC8' }} />))}
               </div>
             </div>
             {(() => {
               const locked = !allSeen
-              const btnStyle = locked ? { ...startBtn, marginTop: 0, opacity: 0.4, cursor: 'not-allowed' } : { ...startBtn, marginTop: 0 }
-              const lbl = qs.length > 0 ? (locked ? 'View all slides to continue' : 'Continue to section check') : (locked ? 'View all slides to continue' : (currentIndex < sections.length - 1 ? 'Next section' : 'Finish sections'))
-              return (<button onClick={async () => { if (locked) return; if (qs.length > 0) goToQuiz(); else { setPassedSections((p) => ({ ...p, [section.id]: true })); await saveSectionProgress(section.id, 100, true); moveNext() } }} disabled={locked} style={btnStyle}>{lbl}</button>)
+              const lbl = qs.length > 0 ? (locked ? 'View all slides to continue' : 'Continue to section check →') : (locked ? 'View all slides to continue' : (currentIndex < sections.length - 1 ? 'Next section →' : 'Finish sections'))
+              return (<button onClick={async () => { if (locked) return; if (qs.length > 0) goToQuiz(); else { setPassedSections((p) => ({ ...p, [section.id]: true })); await saveSectionProgress(section.id, 100, true); moveNext() } }} disabled={locked} style={{ ...primaryBtn, opacity: locked ? 0.4 : 1, cursor: locked ? 'not-allowed' : 'pointer' }}>{lbl}</button>)
             })()}
           </div>
         </div>
@@ -340,96 +368,108 @@ export default function CoursePage() {
 
     return (
       <div style={pageStyle}>
-        <button onClick={() => setStarted(false)} style={backBtn}>Back to course overview</button>
-        <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '20px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{section.type === 'video' ? 'Video' : 'Reading'} · Section {currentIndex + 1} of {sections.length}</div>
-        <h1 style={{ marginBottom: '18px' }}>{section.title}</h1>
-        {section.type === 'video' ? (
-          <div style={{ maxWidth: '660px', marginBottom: '24px' }}>
-            <div style={{ position: 'relative', paddingBottom: '56.25%', background: '#000', borderRadius: '12px', overflow: 'hidden' }}>
-              <iframe src={section.video_url} allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }} />
-              {!watchedSections[section.id] && (
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0))', padding: '28px 14px 12px', pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ color: '#fff', fontSize: '13px', fontWeight: 600, flex: 1 }}>Watch to unlock the quiz</div>
-                  <div style={{ color: '#fff', fontSize: '16px', fontWeight: 700 }}>{secondsLeft}s</div>
-                </div>
-              )}
+        <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+          <button onClick={() => setStarted(false)} style={backBtn}>← Back to overview</button>
+          <div style={{ marginTop: '16px', marginBottom: '6px', display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: section.type === 'video' ? 'rgba(45,91,227,0.1)' : 'rgba(15,110,86,0.1)', color: section.type === 'video' ? '#2D5BE3' : '#0F6E56', fontSize: '12px', fontWeight: 600 }}>{section.type === 'video' ? '▶ Video' : '📖 Reading'} · Section {currentIndex + 1} of {sections.length}</div>
+          <h1 style={{ marginBottom: '18px', fontSize: '22px' }}>{section.title}</h1>
+          {section.type === 'video' ? (
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ position: 'relative', paddingBottom: '56.25%', background: '#000', borderRadius: '16px', overflow: 'hidden' }}>
+                <iframe src={section.video_url} allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }} />
+                {!watchedSections[section.id] && (
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0))', padding: '28px 14px 12px', pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ color: '#fff', fontSize: '13px', fontWeight: 600, flex: 1 }}>Watch to unlock the quiz</div>
+                    <div style={{ color: '#fff', fontSize: '16px', fontWeight: 700 }}>{secondsLeft}s</div>
+                  </div>
+                )}
+              </div>
+              {watchedSections[section.id] && <div style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: 'rgba(15,110,86,0.1)', color: '#0F6E56' }}>✓ Video watched</div>}
             </div>
-            {watchedSections[section.id] && <div style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 11px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: 'rgba(15,110,86,0.1)', color: '#0F6E56' }}>✓ Video watched</div>}
-          </div>
-        ) : (
-          <p style={{ fontSize: '15px', lineHeight: '1.85', color: '#3A3A35', maxWidth: '640px', marginBottom: '24px' }}>{section.content}</p>
-        )}
-        {(() => {
-          const isVideo = section.type === 'video'
-          const locked = isVideo && !watchedSections[section.id]
-          const btnStyle = locked ? { ...startBtn, opacity: 0.4, cursor: 'not-allowed' } : startBtn
-          const lbl = qs.length > 0 ? (locked ? `Watch the video first (${secondsLeft}s)` : 'Continue to section check') : (locked ? `Watch the video first (${secondsLeft}s)` : (currentIndex < sections.length - 1 ? 'Next section' : 'Finish sections'))
-          return <button onClick={async () => { if (locked) return; if (qs.length > 0) goToQuiz(); else { setPassedSections((p) => ({ ...p, [section.id]: true })); await saveSectionProgress(section.id, 100, true); moveNext() } }} disabled={locked} style={btnStyle}>{lbl}</button>
-        })()}
+          ) : (
+            <div style={{ ...cardBox, fontSize: '15px', lineHeight: '1.85', color: '#3A3A35', marginBottom: '24px' }}>{section.content}</div>
+          )}
+          {(() => {
+            const isVideo = section.type === 'video'
+            const locked = isVideo && !watchedSections[section.id]
+            const lbl = qs.length > 0 ? (locked ? `Watch the video first (${secondsLeft}s)` : 'Continue to section check →') : (locked ? `Watch the video first (${secondsLeft}s)` : (currentIndex < sections.length - 1 ? 'Next section →' : 'Finish sections'))
+            return <button onClick={async () => { if (locked) return; if (qs.length > 0) goToQuiz(); else { setPassedSections((p) => ({ ...p, [section.id]: true })); await saveSectionProgress(section.id, 100, true); moveNext() } }} disabled={locked} style={{ ...primaryBtn, opacity: locked ? 0.4 : 1, cursor: locked ? 'not-allowed' : 'pointer' }}>{lbl}</button>
+          })()}
+        </div>
       </div>
     )
   }
 
+  // ===== COURSE OVERVIEW =====
   return (
     <div style={pageStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-        <Link href="/" style={{ color: '#2D5BE3', textDecoration: 'none', fontSize: '14px' }}>Back to all courses</Link>
-        <div style={{ fontSize: '13px', color: '#5A5A55' }}>Logged in as <strong>{user.name}</strong></div>
-      </div>
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+          <Link href="/" style={{ color: '#2D5BE3', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>← All courses</Link>
+          <div style={{ fontSize: '13px', color: '#5A5A55' }}>Logged in as <strong>{user.name}</strong></div>
+        </div>
 
-      <div style={{ fontSize: '52px', marginTop: '24px', marginBottom: '12px' }}>{course.icon}</div>
-      <h1 style={{ marginBottom: '12px' }}>{course.title}</h1>
-      <p style={{ fontSize: '16px', color: '#5A5A55', lineHeight: '1.6', maxWidth: '900px', marginBottom: '24px' }}>{course.description}</p>
+        <div style={{ background: 'linear-gradient(135deg,#FF8A5B,#E5482C)', borderRadius: '20px', padding: '28px', color: '#fff', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
+          <div style={{ fontSize: '46px', marginBottom: '10px' }}>{course.icon}</div>
+          <h1 style={{ fontSize: '26px', fontWeight: 700, marginBottom: '8px' }}>{course.title}</h1>
+          <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.5', maxWidth: '600px' }}>{course.description}</p>
+          {examPassedBefore && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: '13px', fontWeight: 600, marginTop: '14px' }}>✓ You have completed this course</div>
+          )}
+        </div>
 
-      {examPassedBefore && (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(15,110,86,0.1)', color: '#0F6E56', fontSize: '13px', fontWeight: 600, marginBottom: '20px' }}>✓ You have already completed this course</div>
-      )}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
+          <div style={infoTile}><div style={tileLabel}>Type</div><div style={tileValue}>{course.type === 'mandatory' ? '🔴 Mandatory' : '🔵 Optional'}</div></div>
+          <div style={infoTile}><div style={tileLabel}>Pass mark</div><div style={tileValue}>{course.pass_mark}%</div></div>
+          {course.reminder_cycle && (<div style={infoTile}><div style={tileLabel}>Renewal</div><div style={tileValue}>Every {course.reminder_cycle} months</div></div>)}
+        </div>
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
-        <div style={infoTile}><div style={tileLabel}>Type</div><div style={tileValue}>{course.type === 'mandatory' ? 'Mandatory' : 'Optional'}</div></div>
-        <div style={infoTile}><div style={tileLabel}>Pass mark</div><div style={tileValue}>{course.pass_mark}%</div></div>
-        {course.reminder_cycle && (<div style={infoTile}><div style={tileLabel}>Renewal</div><div style={tileValue}>Every {course.reminder_cycle} months</div></div>)}
-      </div>
+        <h2 style={{ fontSize: '18px', marginBottom: '14px' }}>Course content · {sections.length} sections</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+          {sections.map((section, index) => (
+            <div key={section.id} style={{ ...cardBox, display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: passedSections[section.id] ? 'linear-gradient(135deg,#3FC9A0,#0F6E56)' : 'rgba(45,91,227,0.1)', color: passedSections[section.id] ? '#fff' : '#2D5BE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 700, flexShrink: 0 }}>{passedSections[section.id] ? '✓' : index + 1}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '15px', fontWeight: 600 }}>{section.title}</div>
+                <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '2px' }}>{section.type === 'video' ? '▶ Video' : section.type === 'slides' ? '🖼️ Slides' : '📖 Reading'}{sectionChecks(section.id).length > 0 ? ` · ${sectionChecks(section.id).length} questions` : ''}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
-      <h2 style={{ fontSize: '18px', marginBottom: '14px' }}>Course content · {sections.length} sections</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '900px', marginBottom: '20px' }}>
-        {sections.map((section, index) => (
-          <div key={section.id} style={sectionCard}>
-            <div style={{ ...sectionNumber, background: passedSections[section.id] ? 'rgba(15,110,86,0.12)' : 'rgba(45,91,227,0.1)', color: passedSections[section.id] ? '#0F6E56' : '#2D5BE3' }}>{passedSections[section.id] ? '✓' : index + 1}</div>
+        {finalQuestions.length > 0 && (
+          <div style={{ ...cardBox, display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '24px', opacity: allSectionsPassed ? 1 : 0.6, border: allSectionsPassed ? '1px solid rgba(83,74,183,0.3)' : undefined }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: 'linear-gradient(135deg,#8F86E0,#534AB7)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>★</div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '14px', fontWeight: 600 }}>{section.title}</div>
-              <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '2px' }}>{section.type === 'video' ? 'Video' : section.type === 'slides' ? 'Slides' : 'Reading'}{sectionChecks(section.id).length > 0 ? ` · ${sectionChecks(section.id).length} questions` : ''}</div>
+              <div style={{ fontSize: '15px', fontWeight: 600 }}>Final course exam</div>
+              <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '2px' }}>{finalQuestions.length} questions · Pass {course.pass_mark}%{allSectionsPassed ? '' : ' · 🔒 Complete all sections first'}</div>
             </div>
           </div>
-        ))}
-      </div>
-
-      {finalQuestions.length > 0 && (
-        <div style={{ ...sectionCard, maxWidth: '900px', marginBottom: '20px', borderColor: allSectionsPassed ? 'rgba(83,74,183,0.3)' : 'rgba(0,0,0,0.08)', opacity: allSectionsPassed ? 1 : 0.55 }}>
-          <div style={{ ...sectionNumber, background: 'rgba(83,74,183,0.12)', color: '#534AB7' }}>★</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '14px', fontWeight: 600 }}>Final course exam</div>
-            <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '2px' }}>{finalQuestions.length} questions · Pass {course.pass_mark}%{allSectionsPassed ? '' : ' · Complete all sections first'}</div>
-          </div>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', gap: '10px' }}>
-        {sections.length > 0 && <button onClick={() => { setStarted(true); setCurrentIndex(0) }} style={startBtn}>Start course</button>}
-        {finalQuestions.length > 0 && allSectionsPassed && (
-          <button onClick={() => { setExamAnswers({}); setExamResult(null); setExamQ(0); setInFinalExam(true) }} style={{ ...startBtn, background: '#534AB7' }}>Take final exam</button>
         )}
+
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          {sections.length > 0 && <button onClick={() => { setStarted(true); setCurrentIndex(0) }} style={primaryBtn}>Start course →</button>}
+          {finalQuestions.length > 0 && allSectionsPassed && (
+            <button onClick={() => { setExamAnswers({}); setExamResult(null); setExamQ(0); setInFinalExam(true) }} style={{ ...primaryBtn, background: 'linear-gradient(135deg,#8F86E0,#534AB7)' }}>★ Take final exam</button>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-const pageStyle: React.CSSProperties = { padding: '40px 5%', fontFamily: 'sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18', width: '100%' }
-const infoTile: React.CSSProperties = { background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', padding: '12px 16px', minWidth: '120px' }
+const pageStyle: React.CSSProperties = { padding: '24px 5%', fontFamily: 'system-ui, sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18', width: '100%' }
+const cardBox: React.CSSProperties = { background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '14px', padding: '16px 18px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }
+const infoTile: React.CSSProperties = { background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '12px', padding: '12px 18px', minWidth: '110px', flex: '1 1 auto' }
 const tileLabel: React.CSSProperties = { fontSize: '11px', color: '#8A8A82', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }
 const tileValue: React.CSSProperties = { fontSize: '15px', fontWeight: 700 }
-const sectionCard: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', padding: '12px 14px' }
-const sectionNumber: React.CSSProperties = { width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, flexShrink: 0 }
-const startBtn: React.CSSProperties = { marginTop: '28px', padding: '12px 24px', background: '#2D5BE3', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }
-const secondaryBtn: React.CSSProperties = { padding: '12px 24px', background: '#FFFFFF', color: '#1A1A18', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }
-const backBtn: React.CSSProperties = { padding: '6px 0', background: 'none', border: 'none', color: '#2D5BE3', fontSize: '14px', cursor: 'pointer' }
+const primaryBtn: React.CSSProperties = { padding: '13px 26px', background: 'linear-gradient(135deg,#5B8DEF,#2D5BE3)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }
+const secondaryBtn: React.CSSProperties = { padding: '13px 24px', background: '#FFFFFF', color: '#1A1A18', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }
+const backBtn: React.CSSProperties = { padding: '8px 0', background: 'none', border: 'none', color: '#2D5BE3', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }
+
+function optBtn(selected: boolean, color: string): React.CSSProperties {
+  return { display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left', padding: '15px 16px', borderRadius: '14px', cursor: 'pointer', border: selected ? `2px solid ${color}` : '2px solid rgba(0,0,0,0.1)', background: selected ? `${color}0F` : '#FFFFFF', fontSize: '15px', color: '#1A1A18', width: '100%' }
+}
+function optCircle(selected: boolean, color: string): React.CSSProperties {
+  return { width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0, border: selected ? `2px solid ${color}` : '2px solid #C4C4BE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: color }
+}

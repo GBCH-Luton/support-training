@@ -92,6 +92,22 @@ function BuilderInner() {
     await supabase.from('course_sections').update({ [field]: value }).eq('id', id)
   }
 
+  async function uploadPptx(sectionId: string, file: File) {
+    if (!file.name.toLowerCase().endsWith('.pptx')) {
+      alert('Please select a .pptx PowerPoint file')
+      return
+    }
+    const filePath = `pptx/${sectionId}-${Date.now()}.pptx`
+    const { error } = await supabase.storage.from('slides').upload(filePath, file, { upsert: true })
+    if (error) {
+      alert('Upload failed: ' + error.message)
+      return
+    }
+    const { data: urlData } = supabase.storage.from('slides').getPublicUrl(filePath)
+    await updateSection(sectionId, 'slide_urls', urlData.publicUrl)
+    alert('PowerPoint uploaded successfully!')
+  }
+
   async function deleteSection(id: string) {
     if (!confirm('Delete this section and all its questions?')) return
     await supabase.from('course_sections').delete().eq('id', id)
@@ -287,9 +303,22 @@ function BuilderInner() {
 
                     {section.type === 'slides' && (
                       <div style={fg}>
-                        <label style={label}>Slide image URLs (comma-separated)</label>
-                        <textarea style={{ ...input, minHeight: '80px', resize: 'vertical' }} value={section.slide_urls || ''} onChange={(e) => updateSection(section.id, 'slide_urls', e.target.value)} placeholder="https://...Slide1.PNG, https://...Slide2.PNG, https://...Slide3.PNG" />
-                        <div style={{ fontSize: '11px', color: '#8A8A82', marginTop: '4px' }}>Paste your Supabase storage URLs separated by commas</div>
+                        <label style={label}>PowerPoint slides</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          <label style={{ padding: '9px 16px', background: 'rgba(45,91,227,0.08)', color: '#2D5BE3', border: '1px solid rgba(45,91,227,0.2)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                            📤 Upload PowerPoint (.pptx)
+                            <input type="file" accept=".pptx" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPptx(section.id, f) }} />
+                          </label>
+                          {section.slide_urls && (
+                            <span style={{ fontSize: '12px', color: '#0F6E56', fontWeight: 600 }}>✓ File uploaded</span>
+                          )}
+                        </div>
+                        {section.slide_urls && (
+                          <div style={{ fontSize: '11px', color: '#8A8A82', marginTop: '6px', wordBreak: 'break-all' }}>
+                            Current file: {section.slide_urls.split('/').pop()}
+                          </div>
+                        )}
+                        <div style={{ fontSize: '11px', color: '#8A8A82', marginTop: '6px' }}>Upload a .pptx file. Learners will view the slides with built-in navigation. To replace it, just upload a new file.</div>
                       </div>
                     )}
                   </div>
