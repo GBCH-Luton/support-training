@@ -172,4 +172,4 @@ export default function AdminCourses() {
 
 const th: React.CSSProperties = { textAlign: 'left', padding: '11px 16px', fontSize: '11px', fontWeight: 700, color: '#8A8A82', textTransform: 'uppercase', letterSpacing: '0.05em' }
 const thClick: React.CSSProperties = { ...th, cursor: 'pointer', userSelect: 'none' }
-const td: React.CSSProperties = { padding: '13px 16px', verticalAlign: 'middle', color: '#1A1A18' }
+const td: React.CSSProperties = { padding: '13px 16px', verticalAlign: 'middle', color: '#1A1A18' }npm

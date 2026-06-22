@@ -25,11 +25,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#F4F3EF 0%,#E8ECF8 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
-      <div style={{ background: '#FFFFFF', borderRadius: '24px', padding: '36px 32px', width: '100%', maxWidth: '420px', boxShadow: '0 12px 40px rgba(45,91,227,0.12)', border: '1px solid rgba(255,255,255,0.8)' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#F4F3EF 0%,#E8F2EA 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
+      <div style={{ background: '#FFFFFF', borderRadius: '24px', padding: '36px 32px', width: '100%', maxWidth: '420px', boxShadow: '0 12px 40px rgba(45,122,58,0.12)', border: '1px solid rgba(255,255,255,0.8)' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
-          <div style={{ width: '46px', height: '46px', background: 'linear-gradient(135deg,#5B8DEF,#2D5BE3)', borderRadius: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 700, boxShadow: '0 4px 12px rgba(45,91,227,0.3)' }}>ST</div>
+          <div style={{ width: '46px', height: '46px', background: 'linear-gradient(135deg,#5BA86A,#2D7A3A)', borderRadius: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px', fontWeight: 700, boxShadow: '0 4px 12px rgba(45,122,58,0.3)' }}>ST</div>
           <div>
             <div style={{ fontSize: '17px', fontWeight: 700, color: '#1A1A18' }}>Support Training</div>
             <div style={{ fontSize: '12px', color: '#8A8A82' }}>Staff learning portal</div>
@@ -61,7 +61,7 @@ export default function LoginPage() {
         )}
 
         <button onClick={handleLogin} disabled={loading}
-          style={{ width: '100%', padding: '14px', marginTop: '20px', background: loading ? '#8A8A82' : 'linear-gradient(135deg,#5B8DEF,#2D5BE3)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 4px 14px rgba(45,91,227,0.3)' }}>
+          style={{ width: '100%', padding: '14px', marginTop: '20px', background: loading ? '#8A8A82' : 'linear-gradient(135deg,#5BA86A,#2D7A3A)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 4px 14px rgba(45,122,58,0.3)' }}>
           {loading ? 'Signing in...' : 'Sign in →'}
         </button>
 
