@@ -10,6 +10,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mode, setMode] = useState<'login' | 'forgot'>('login')
+  const [success, setSuccess] = useState('')
+
+  async function handleForgotPassword() {
+    if (!email.trim()) { setError('Please enter your email address'); return }
+    setLoading(true)
+    setError('')
+    setSuccess('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    setLoading(false)
+    if (error) {
+      setError(error.message)
+    } else {
+      setSuccess('Check your inbox — we sent a password reset link.')
+    }
+  }
 
   async function handleLogin() {
     if (!email.trim() || !password.trim()) { setError('Please enter your email and password'); return }
@@ -36,8 +54,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1A1A18', marginBottom: '6px' }}>Welcome 👋</h1>
-        <p style={{ fontSize: '14px', color: '#8A8A82', marginBottom: '24px' }}>Sign in with your work email and password.</p>
+        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1A1A18', marginBottom: '6px' }}>
+          {mode === 'login' ? 'Welcome 👋' : 'Reset password'}
+        </h1>
+        <p style={{ fontSize: '14px', color: '#8A8A82', marginBottom: '24px' }}>
+          {mode === 'login' ? 'Sign in with your work email and password.' : "Enter your work email and we'll send you a reset link."}
+        </p>
 
         <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#5A5A55', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '7px' }}>Work email</label>
         <input
@@ -47,25 +69,47 @@ export default function LoginPage() {
           style={inputStyle}
         />
 
-        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#5A5A55', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '7px', marginTop: '16px' }}>Password</label>
-        <input
-          type="password" value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-          placeholder="Enter your password"
-          style={inputStyle}
-        />
+        {mode === 'login' && (
+          <>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#5A5A55', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '7px', marginTop: '16px' }}>Password</label>
+            <input
+              type="password" value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              placeholder="Enter your password"
+              style={inputStyle}
+            />
+          </>
+        )}
 
         {error && (
           <div style={{ padding: '11px 14px', background: 'rgba(153,60,29,0.08)', color: '#993C1D', borderRadius: '10px', fontSize: '13px', marginTop: '16px' }}>⚠️ {error}</div>
         )}
+        {success && (
+          <div style={{ padding: '11px 14px', background: 'rgba(45,122,58,0.08)', color: '#2D7A3A', borderRadius: '10px', fontSize: '13px', marginTop: '16px' }}>✓ {success}</div>
+        )}
 
-        <button onClick={handleLogin} disabled={loading}
-          style={{ width: '100%', padding: '14px', marginTop: '20px', background: loading ? '#8A8A82' : 'linear-gradient(135deg,#5BA86A,#2D7A3A)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 4px 14px rgba(45,122,58,0.3)' }}>
-          {loading ? 'Signing in...' : 'Sign in →'}
-        </button>
+        {mode === 'login' ? (
+          <button onClick={handleLogin} disabled={loading}
+            style={{ width: '100%', padding: '14px', marginTop: '20px', background: loading ? '#8A8A82' : 'linear-gradient(135deg,#5BA86A,#2D7A3A)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 4px 14px rgba(45,122,58,0.3)' }}>
+            {loading ? 'Signing in...' : 'Sign in →'}
+          </button>
+        ) : (
+          <button onClick={handleForgotPassword} disabled={loading || !!success}
+            style={{ width: '100%', padding: '14px', marginTop: '20px', background: (loading || success) ? '#8A8A82' : 'linear-gradient(135deg,#5BA86A,#2D7A3A)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: (loading || success) ? 'not-allowed' : 'pointer', boxShadow: (loading || success) ? 'none' : '0 4px 14px rgba(45,122,58,0.3)' }}>
+            {loading ? 'Sending...' : 'Send reset link →'}
+          </button>
+        )}
 
-        <p style={{ fontSize: '12px', color: '#8A8A82', marginTop: '18px', textAlign: 'center' }}>Forgot your password? Contact your administrator.</p>
+        <p style={{ fontSize: '12px', color: '#8A8A82', marginTop: '18px', textAlign: 'center' }}>
+          {mode === 'login' ? (
+            <>Forgot your password?{' '}
+              <span onClick={() => { setMode('forgot'); setError(''); setSuccess('') }} style={{ color: '#2D7A3A', cursor: 'pointer', fontWeight: 600 }}>Reset it</span>
+            </>
+          ) : (
+            <span onClick={() => { setMode('login'); setError(''); setSuccess('') }} style={{ color: '#2D7A3A', cursor: 'pointer', fontWeight: 600 }}>← Back to sign in</span>
+          )}
+        </p>
       </div>
     </div>
   )
