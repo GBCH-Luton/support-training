@@ -11,7 +11,6 @@ const navItems = [
   { href: '/admin/builder', label: 'Course builder', icon: '✏️' },
   { href: '/admin/categories', label: 'Categories', icon: '🏷️' },
   { href: '/admin/departments', label: 'Departments', icon: '🏢' },
-  { href: '/admin/staff', label: 'Staff', icon: '👥' },
   { href: '/admin/enrolments', label: 'Enrolments', icon: '🎯' },
 ]
 
