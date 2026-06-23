@@ -120,7 +120,7 @@ export default function AdminEnrolments() {
               style={{ padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: '1.5px solid rgba(0,0,0,0.14)', background: '#F8F7F4', color: '#5A5A55' }}>
               Clear
             </button>
-            {staff.filter(s => s.role !== 'admin').map((s) => (
+            {staff.map((s) => (
               <button key={s.id} type="button" onClick={() => toggleBulkStaff(s.id)}
                 style={{ padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: bulkStaff.includes(s.id) ? '1.5px solid #2D5BE3' : '1.5px solid rgba(0,0,0,0.14)', background: bulkStaff.includes(s.id) ? 'rgba(45,91,227,0.08)' : '#fff', color: bulkStaff.includes(s.id) ? '#2D5BE3' : '#5A5A55' }}>
                 {s.name}
@@ -138,7 +138,7 @@ export default function AdminEnrolments() {
       {/* Filter by staff */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <button onClick={() => setSelectedStaff('all')} style={pillStyle(selectedStaff === 'all')}>All staff</button>
-        {staff.filter(s => s.role !== 'admin').map((s) => (
+        {staff.map((s) => (
           <button key={s.id} onClick={() => setSelectedStaff(s.id)} style={pillStyle(selectedStaff === s.id)}>{s.name}</button>
         ))}
       </div>
