@@ -5,11 +5,13 @@ import { supabase } from '@/lib/supabaseClient'
 
 type Staff = { id: string; name: string; role: string }
 type Course = { id: string; title: string; icon: string; type: string }
+type Department = { id: string; name: string }
 type Enrolment = { id: string; staff_id: string; course_id: string; mandatory: boolean; due_date: string | null; enrolled_on: string }
 
 export default function AdminEnrolments() {
   const [staff, setStaff] = useState<Staff[]>([])
   const [courses, setCourses] = useState<Course[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
   const [enrolments, setEnrolments] = useState<Enrolment[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -21,18 +23,22 @@ export default function AdminEnrolments() {
   const [bulkMandatory, setBulkMandatory] = useState(true)
   const [showBulk, setShowBulk] = useState(false)
   const [staffSearch, setStaffSearch] = useState('')
+  const [assignMode, setAssignMode] = useState<'individual' | 'department'>('individual')
+  const [bulkDepartment, setBulkDepartment] = useState('')
 
   useEffect(() => { fetchAll() }, [])
 
   async function fetchAll() {
-    const [staffRes, courseRes, enrolRes] = await Promise.all([
+    const [staffRes, courseRes, enrolRes, deptRes] = await Promise.all([
       supabase.from('staff').select('id, name, role').eq('active', true).order('name'),
       supabase.from('courses').select('id, title, icon, type').eq('status', 'live').order('title'),
       supabase.from('enrolments').select('*').order('enrolled_on', { ascending: false }),
+      supabase.from('departments').select('id, name').order('name'),
     ])
     if (staffRes.data) setStaff(staffRes.data)
     if (courseRes.data) setCourses(courseRes.data)
     if (enrolRes.data) setEnrolments(enrolRes.data)
+    if (deptRes.data) setDepartments(deptRes.data)
     setLoading(false)
   }
 
@@ -44,15 +50,32 @@ export default function AdminEnrolments() {
 
   async function bulkAssign() {
     if (!bulkCourse) { alert('Select a course'); return }
-    if (bulkStaff.length === 0) { alert('Select at least one staff member'); return }
     setSaving(true)
-    const toInsert = bulkStaff
+
+    let targetStaffIds: string[] = []
+
+    if (assignMode === 'individual') {
+      if (bulkStaff.length === 0) { alert('Select at least one staff member'); setSaving(false); return }
+      targetStaffIds = bulkStaff
+    } else {
+      if (!bulkDepartment) { alert('Select a department'); setSaving(false); return }
+      const { data } = await supabase
+        .from('staff_departments')
+        .select('staff_id')
+        .eq('department_id', bulkDepartment)
+      if (!data || data.length === 0) { alert('No active staff found in this department'); setSaving(false); return }
+      targetStaffIds = data.map((r: { staff_id: string }) => r.staff_id)
+    }
+
+    const toInsert = targetStaffIds
       .filter((sid) => !enrolments.some((e) => e.staff_id === sid && e.course_id === bulkCourse))
       .map((sid) => ({ staff_id: sid, course_id: bulkCourse, mandatory: bulkMandatory, due_date: bulkDue || null }))
+
     if (toInsert.length > 0) {
       await supabase.from('enrolments').insert(toInsert)
     }
-    setBulkCourse(''); setBulkStaff([]); setBulkDue(''); setShowBulk(false)
+
+    setBulkCourse(''); setBulkStaff([]); setBulkDue(''); setBulkDepartment(''); setShowBulk(false)
     await fetchAll()
     setSaving(false)
   }
@@ -72,6 +95,11 @@ export default function AdminEnrolments() {
 
   const getStaff = (id: string) => staff.find((s) => s.id === id)
   const getCourse = (id: string) => courses.find((c) => c.id === id)
+  const getDept = (id: string) => departments.find((d) => d.id === id)
+
+  const assignLabel = assignMode === 'individual'
+    ? `✓ Assign to ${bulkStaff.length} staff member${bulkStaff.length !== 1 ? 's' : ''}`
+    : bulkDepartment ? `✓ Assign to ${getDept(bulkDepartment)?.name || 'department'}` : '✓ Assign to department'
 
   return (
     <div>
@@ -90,6 +118,8 @@ export default function AdminEnrolments() {
       {showBulk && (
         <div style={card}>
           <div style={cardTitle}>Assign a course to staff members</div>
+
+          {/* Course + due date */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div>
               <label style={label}>Course *</label>
@@ -104,44 +134,72 @@ export default function AdminEnrolments() {
             </div>
           </div>
 
-          <label style={label}>Select staff members *</label>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <input
-                style={{ ...input, paddingLeft: '32px' }}
-                list="staff-datalist"
-                value={staffSearch}
-                onChange={(e) => handleStaffSearch(e.target.value)}
-                placeholder="Search by name…"
-              />
-              <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', pointerEvents: 'none' }}>🔍</span>
-              <datalist id="staff-datalist">
-                {staff.filter((s) => !bulkStaff.includes(s.id)).map((s) => (
-                  <option key={s.id} value={s.name} />
-                ))}
-              </datalist>
-            </div>
-            <button type="button" onClick={() => setBulkStaff(staff.map((s) => s.id))}
-              style={{ padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: '1.5px solid rgba(0,0,0,0.14)', background: '#F8F7F4', color: '#5A5A55', whiteSpace: 'nowrap' }}>
-              Select all
-            </button>
+          {/* Assign to toggle */}
+          <label style={label}>Assign to</label>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', marginTop: '4px' }}>
+            {([['individual', '👤 Individual'], ['department', '🏢 Department']] as const).map(([val, lbl]) => (
+              <button key={val} type="button"
+                onClick={() => { setAssignMode(val); setBulkStaff([]); setBulkDepartment(''); setStaffSearch('') }}
+                style={{ padding: '7px 16px', borderRadius: '8px', border: `1.5px solid ${assignMode === val ? '#2D5BE3' : 'rgba(0,0,0,0.14)'}`, background: assignMode === val ? 'rgba(45,91,227,0.08)' : '#fff', color: assignMode === val ? '#2D5BE3' : '#5A5A55', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                {lbl}
+              </button>
+            ))}
           </div>
 
-          {bulkStaff.length > 0 && (
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
-              {bulkStaff.map((id) => {
-                const s = staff.find((m) => m.id === id)
-                return s ? (
-                  <span key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', background: 'rgba(45,91,227,0.08)', color: '#2D5BE3', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
-                    {s.name}
-                    <button type="button" onClick={() => removeFromBulk(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2D5BE3', fontSize: '14px', lineHeight: 1, padding: 0 }}>×</button>
-                  </span>
-                ) : null
-              })}
-            </div>
+          {/* Individual picker */}
+          {assignMode === 'individual' && (
+            <>
+              <label style={label}>Select staff members *</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <input
+                    style={{ ...input, paddingLeft: '32px' }}
+                    list="staff-datalist"
+                    value={staffSearch}
+                    onChange={(e) => handleStaffSearch(e.target.value)}
+                    placeholder="Search by name…"
+                  />
+                  <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', pointerEvents: 'none' }}>🔍</span>
+                  <datalist id="staff-datalist">
+                    {staff.filter((s) => !bulkStaff.includes(s.id)).map((s) => (
+                      <option key={s.id} value={s.name} />
+                    ))}
+                  </datalist>
+                </div>
+                <button type="button" onClick={() => setBulkStaff(staff.map((s) => s.id))}
+                  style={{ padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: '1.5px solid rgba(0,0,0,0.14)', background: '#F8F7F4', color: '#5A5A55', whiteSpace: 'nowrap' }}>
+                  Select all
+                </button>
+              </div>
+              {bulkStaff.length > 0 && (
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                  {bulkStaff.map((id) => {
+                    const s = staff.find((m) => m.id === id)
+                    return s ? (
+                      <span key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', background: 'rgba(45,91,227,0.08)', color: '#2D5BE3', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
+                        {s.name}
+                        <button type="button" onClick={() => removeFromBulk(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2D5BE3', fontSize: '14px', lineHeight: 1, padding: 0 }}>×</button>
+                      </span>
+                    ) : null
+                  })}
+                </div>
+              )}
+            </>
           )}
 
-          <label style={{ ...label, marginTop: '16px' }}>Type</label>
+          {/* Department picker */}
+          {assignMode === 'department' && (
+            <>
+              <label style={label}>Select department *</label>
+              <select style={{ ...input, marginBottom: '16px' }} value={bulkDepartment} onChange={(e) => setBulkDepartment(e.target.value)}>
+                <option value="">— Select a department —</option>
+                {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </>
+          )}
+
+          {/* Type */}
+          <label style={{ ...label, marginTop: assignMode === 'individual' && bulkStaff.length === 0 ? '0' : '4px' }}>Type</label>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', marginTop: '4px' }}>
             {[['mandatory', '🔴 Mandatory'], ['optional', '🔵 Optional']].map(([val, lbl]) => (
               <button key={val} type="button" onClick={() => setBulkMandatory(val === 'mandatory')}
@@ -152,8 +210,8 @@ export default function AdminEnrolments() {
           </div>
 
           <button onClick={bulkAssign} disabled={saving}
-            style={{ padding: '10px 24px', background: '#2D5BE3', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-            {saving ? 'Assigning...' : `✓ Assign to ${bulkStaff.length} staff member${bulkStaff.length !== 1 ? 's' : ''}`}
+            style={{ padding: '10px 24px', background: saving ? '#8A8A82' : '#2D5BE3', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
+            {saving ? 'Assigning…' : assignLabel}
           </button>
         </div>
       )}
