@@ -1,3 +1,4 @@
+// Practice pull request - testing the workflow
 'use client'
 
 import { useEffect, useState } from 'react'
