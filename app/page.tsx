@@ -53,16 +53,20 @@ export default function Home() {
         .from('staff_departments').select('department_id').eq('staff_id', user!.id)
       const deptIds = (myDepts || []).map((d) => d.department_id)
 
-      const [courseLinksRes, enrolRes] = await Promise.all([
+      const [courseLinksRes, enrolRes, deptEnrolRes] = await Promise.all([
         deptIds.length > 0
           ? supabase.from('course_departments').select('course_id').in('department_id', deptIds)
           : Promise.resolve({ data: [] as { course_id: string }[] }),
         supabase.from('enrolments').select('course_id').eq('staff_id', user!.id),
+        deptIds.length > 0
+          ? supabase.from('department_enrolments').select('course_id').in('department_id', deptIds)
+          : Promise.resolve({ data: [] as { course_id: string }[] }),
       ])
 
       const deptCourseIds = (courseLinksRes.data || []).map((c) => c.course_id)
       const enrolCourseIds = (enrolRes.data || []).map((e) => e.course_id)
-      const allCourseIds = [...new Set([...deptCourseIds, ...enrolCourseIds])]
+      const deptEnrolCourseIds = (deptEnrolRes.data || []).map((e) => e.course_id)
+      const allCourseIds = [...new Set([...deptCourseIds, ...enrolCourseIds, ...deptEnrolCourseIds])]
       setAllowedCourseIds(new Set(allCourseIds))
 
       const { data: exams } = await supabase.from('exam_attempts').select('course_id, passed').eq('staff_id', user!.id)
