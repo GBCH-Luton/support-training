@@ -102,17 +102,6 @@ export default function AdminEnrolments() {
               <label style={label}>Due date (optional)</label>
               <input style={input} type="date" value={bulkDue} onChange={(e) => setBulkDue(e.target.value)} />
             </div>
-            <div>
-              <label style={label}>Type</label>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
-                {[['mandatory', '🔴 Mandatory'], ['optional', '🔵 Optional']].map(([val, lbl]) => (
-                  <button key={val} type="button" onClick={() => setBulkMandatory(val === 'mandatory')}
-                    style={{ padding: '7px 14px', borderRadius: '8px', border: `1.5px solid ${(val === 'mandatory') === bulkMandatory ? '#2D5BE3' : 'rgba(0,0,0,0.14)'}`, background: (val === 'mandatory') === bulkMandatory ? 'rgba(45,91,227,0.08)' : '#fff', color: (val === 'mandatory') === bulkMandatory ? '#2D5BE3' : '#5A5A55', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                    {lbl}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
           <label style={label}>Select staff members *</label>
@@ -151,6 +140,16 @@ export default function AdminEnrolments() {
               })}
             </div>
           )}
+
+          <label style={{ ...label, marginTop: '16px' }}>Type</label>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', marginTop: '4px' }}>
+            {[['mandatory', '🔴 Mandatory'], ['optional', '🔵 Optional']].map(([val, lbl]) => (
+              <button key={val} type="button" onClick={() => setBulkMandatory(val === 'mandatory')}
+                style={{ padding: '7px 14px', borderRadius: '8px', border: `1.5px solid ${(val === 'mandatory') === bulkMandatory ? '#2D5BE3' : 'rgba(0,0,0,0.14)'}`, background: (val === 'mandatory') === bulkMandatory ? 'rgba(45,91,227,0.08)' : '#fff', color: (val === 'mandatory') === bulkMandatory ? '#2D5BE3' : '#5A5A55', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                {lbl}
+              </button>
+            ))}
+          </div>
 
           <button onClick={bulkAssign} disabled={saving}
             style={{ padding: '10px 24px', background: '#2D5BE3', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
