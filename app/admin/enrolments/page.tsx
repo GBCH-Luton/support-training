@@ -248,7 +248,7 @@ export default function AdminEnrolments() {
             ))}
           </div>
 
-          <button onClick={bulkAssign} disabled={saving}
+          <button type="button" onClick={bulkAssign} disabled={saving}
             style={{ padding: '10px 24px', background: saving ? '#8A8A82' : '#2D5BE3', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
             {saving ? 'Assigning…' : assignLabel}
           </button>
