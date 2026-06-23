@@ -52,21 +52,28 @@ export default function Home() {
       const { data: myDepts } = await supabase
         .from('staff_departments').select('department_id').eq('staff_id', user!.id)
       const deptIds = (myDepts || []).map((d) => d.department_id)
-      if (deptIds.length === 0) { setAllowedCourseIds(new Set()); return }
-      const { data: courseLinks } = await supabase
-        .from('course_departments').select('course_id').in('department_id', deptIds)
-      setAllowedCourseIds(new Set((courseLinks || []).map((c) => c.course_id)))
 
-      // Status: completed (passed exam), in_progress (any section progress), not_started
+      const [courseLinksRes, enrolRes] = await Promise.all([
+        deptIds.length > 0
+          ? supabase.from('course_departments').select('course_id').in('department_id', deptIds)
+          : Promise.resolve({ data: [] as { course_id: string }[] }),
+        supabase.from('enrolments').select('course_id').eq('staff_id', user!.id),
+      ])
+
+      const deptCourseIds = (courseLinksRes.data || []).map((c) => c.course_id)
+      const enrolCourseIds = (enrolRes.data || []).map((e) => e.course_id)
+      const allCourseIds = [...new Set([...deptCourseIds, ...enrolCourseIds])]
+      setAllowedCourseIds(new Set(allCourseIds))
+
       const { data: exams } = await supabase.from('exam_attempts').select('course_id, passed').eq('staff_id', user!.id)
       const { data: progress } = await supabase.from('section_progress').select('course_id').eq('staff_id', user!.id)
       const status: Record<string, 'completed' | 'in_progress' | 'not_started'> = {}
       const passedCourses = new Set((exams || []).filter((e) => e.passed).map((e) => e.course_id))
       const startedCourses = new Set((progress || []).map((p) => p.course_id))
-      ;(courseLinks || []).forEach((c) => {
-        if (passedCourses.has(c.course_id)) status[c.course_id] = 'completed'
-        else if (startedCourses.has(c.course_id)) status[c.course_id] = 'in_progress'
-        else status[c.course_id] = 'not_started'
+      allCourseIds.forEach((courseId) => {
+        if (passedCourses.has(courseId)) status[courseId] = 'completed'
+        else if (startedCourses.has(courseId)) status[courseId] = 'in_progress'
+        else status[courseId] = 'not_started'
       })
       setStatusByCourse(status)
     }
