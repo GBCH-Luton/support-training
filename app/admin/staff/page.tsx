@@ -55,6 +55,8 @@ export default function AdminStaff() {
 
   const [search, setSearch]           = useState('')
   const [filterRole, setFilterRole]   = useState('')
+  const [filterDept, setFilterDept]   = useState('')
+  const [filterJob, setFilterJob]     = useState('')
   const [sortKey, setSortKey]         = useState<SortKey>('name')
   const [sortDir, setSortDir]         = useState<'asc'|'desc'>('asc')
   const [openDeptMenu, setOpenDeptMenu] = useState<string|null>(null)
@@ -167,18 +169,24 @@ export default function AdminStaff() {
   }
   const sortIcon = (key: SortKey) => sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ' ↕'
 
+  const uniqueJobTitles = useMemo(() =>
+    [...new Set(staff.map(s => s.job_title).filter(Boolean))].sort()
+  , [staff])
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     let list = q ? staff.filter(s =>
       s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.job_title||'').toLowerCase().includes(q)
     ) : [...staff]
     if (filterRole) list = list.filter(s => s.role === filterRole)
+    if (filterDept) list = list.filter(s => (staffDepts[s.id] || []).includes(filterDept))
+    if (filterJob)  list = list.filter(s => s.job_title === filterJob)
     return list.sort((a, b) => {
       const av = sortKey === 'active' ? String(a.active) : (a[sortKey as keyof Staff] as string || '')
       const bv = sortKey === 'active' ? String(b.active) : (b[sortKey as keyof Staff] as string || '')
       return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
     })
-  }, [staff, search, filterRole, sortKey, sortDir])
+  }, [staff, search, filterRole, filterDept, filterJob, staffDepts, sortKey, sortDir])
 
   return (
     <div>
@@ -296,20 +304,33 @@ export default function AdminStaff() {
         </div>
       )}
 
-      {/* ── Search + role filter ── */}
+      {/* ── Search + filters ── */}
       <div style={{ display:'flex', gap:'12px', flexWrap:'wrap', alignItems:'center', marginBottom:'16px' }}>
-        <div style={{ position:'relative', flex:'0 0 280px' }}>
+        <div style={{ position:'relative', flex:'0 0 260px' }}>
           <input style={{ ...input, paddingLeft:'34px' }} placeholder="Search name, email or job title…" value={search} onChange={e=>setSearch(e.target.value)} />
           <span style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', pointerEvents:'none' }}>🔍</span>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-          <span style={{ fontSize:'12px', color:'#8A8A82', whiteSpace:'nowrap' }}>Filter by role:</span>
-          <select value={filterRole} onChange={e=>setFilterRole(e.target.value)}
-            style={{ ...input, width:'auto', minWidth:'160px', paddingRight:'28px' }}>
-            <option value="">All roles</option>
-            {effectiveRoles.map(r=><option key={r.name} value={r.name}>{r.label}</option>)}
-          </select>
-        </div>
+        <select value={filterRole} onChange={e=>setFilterRole(e.target.value)}
+          style={{ ...input, width:'auto', minWidth:'140px' }}>
+          <option value="">All roles</option>
+          {effectiveRoles.map(r=><option key={r.name} value={r.name}>{r.label}</option>)}
+        </select>
+        <select value={filterDept} onChange={e=>setFilterDept(e.target.value)}
+          style={{ ...input, width:'auto', minWidth:'160px' }}>
+          <option value="">All departments</option>
+          {departments.map(d=><option key={d.id} value={d.id}>{d.icon} {d.name}</option>)}
+        </select>
+        <select value={filterJob} onChange={e=>setFilterJob(e.target.value)}
+          style={{ ...input, width:'auto', minWidth:'160px' }}>
+          <option value="">All job titles</option>
+          {uniqueJobTitles.map(j=><option key={j} value={j}>{j}</option>)}
+        </select>
+        {(filterRole || filterDept || filterJob || search) && (
+          <button type="button" onClick={()=>{ setFilterRole(''); setFilterDept(''); setFilterJob(''); setSearch('') }}
+            style={{ fontSize:'12px', color:'#993C1D', background:'rgba(153,60,29,0.07)', border:'1px solid rgba(153,60,29,0.2)', borderRadius:'8px', padding:'7px 12px', cursor:'pointer', whiteSpace:'nowrap' }}>
+            ✕ Clear filters
+          </button>
+        )}
       </div>
 
       {/* ── Table ── */}
