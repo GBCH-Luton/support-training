@@ -109,18 +109,16 @@ export default function Home() {
         .gbch-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
         .gbch-actions { display:flex; align-items:center; gap:10px; }
         .gbch-menu-btn { display:none; }
-        .gbch-slider { height:240px; }
-        .gbch-slider-pad { padding:36px 80px; }
+        .gbch-slider { }
+        .gbch-slider-pad { padding:32px 80px 44px; }
         .gbch-slider-title { font-size:22px; }
-        .gbch-slider-desc { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .gbch-slider-desc { }
         @media (max-width: 640px) {
           .gbch-grid { grid-template-columns:1fr; }
           .gbch-actions { display:${menuOpen ? 'flex' : 'none'}; flex-direction:column; align-items:stretch; width:100%; gap:8px; margin-top:10px; }
           .gbch-menu-btn { display:inline-flex; }
-          .gbch-slider { height:200px; }
-          .gbch-slider-pad { padding:24px 56px; }
+          .gbch-slider-pad { padding:22px 56px 38px; }
           .gbch-slider-title { font-size:18px; }
-          .gbch-slider-desc { display:none; }
         }
       `}</style>
 
@@ -261,16 +259,20 @@ function HeroSlider({ courses, statusByCourse, allCourses }: {
   const solid = CARD_SOLIDS[allCourses.indexOf(course) % CARD_SOLIDS.length]
   const status = statusByCourse[course.id] || 'not_started'
   const statusLabel = status === 'completed' ? 'Completed' : status === 'in_progress' ? 'In progress' : 'Not started'
-  const cta = status === 'in_progress' ? 'Continue →' : status === 'completed' ? 'Review →' : 'Start course →'
+
+  const hintText = status === 'in_progress' ? 'Click to continue' : status === 'completed' ? 'Click to review' : 'Click to start'
 
   return (
-    <div className="gbch-slider" style={{ position:'relative', overflow:'hidden', background:solid, marginBottom:'28px' }}>
+    <div className="gbch-slider" style={{ position:'relative', overflow:'hidden', background:solid, marginBottom:'28px', cursor:'pointer' }}>
+
+      {/* Full-slide click overlay */}
+      <Link href={`/courses/${course.id}`} style={{ position:'absolute', inset:0, zIndex:1, display:'block' }} aria-label={`Open ${course.title}`} />
 
       {/* Content — centered, fades between slides */}
       <div className="gbch-slider-pad" style={{
-        position:'relative', zIndex:1, height:'100%', display:'flex',
-        flexDirection:'column', justifyContent:'center', alignItems:'center',
-        textAlign:'center', boxSizing:'border-box',
+        position:'relative', zIndex:1, display:'flex',
+        flexDirection:'column', alignItems:'center',
+        textAlign:'center', boxSizing:'border-box', pointerEvents:'none',
         opacity: fading ? 0 : 1, transition:'opacity 0.28s ease',
       }}>
         {/* Section label */}
@@ -278,54 +280,48 @@ function HeroSlider({ courses, statusByCourse, allCourses }: {
           Latest courses assigned to you
         </div>
 
-        {/* Status — plain white, same style as card */}
+        {/* Status */}
         <div style={{ fontSize:'12px', fontWeight:400, color:'rgba(255,255,255,0.85)', letterSpacing:'0.03em', marginBottom:'12px' }}>
           {statusLabel}
         </div>
 
         {/* Course title */}
-        <div className="gbch-slider-title" style={{ fontWeight:800, color:'#fff', lineHeight:1.2, marginBottom:'8px', textShadow:'0 2px 16px rgba(0,0,0,0.22)' }}>
+        <div className="gbch-slider-title" style={{ fontWeight:800, color:'#fff', lineHeight:1.2, marginBottom:'10px' }}>
           {course.title}
         </div>
 
-        {/* Description — hidden on mobile via CSS */}
-        <div className="gbch-slider-desc" style={{ fontSize:'13px', color:'rgba(255,255,255,0.78)', lineHeight:1.6, marginBottom:'20px', maxWidth:'480px' }}>
+        {/* Description — full, no clamp */}
+        <div className="gbch-slider-desc" style={{ fontSize:'13px', color:'rgba(255,255,255,0.78)', lineHeight:1.7, maxWidth:'520px' }}>
           {course.description}
         </div>
+      </div>
 
-        {/* CTA */}
-        <Link href={`/courses/${course.id}`} style={{
-          display:'inline-flex', alignItems:'center', gap:'6px',
-          padding:'11px 26px', background:'rgba(255,255,255,0.95)',
-          borderRadius:'10px', fontSize:'13px', fontWeight:700,
-          textDecoration:'none', color:'#1A1A18',
-          boxShadow:'0 4px 20px rgba(0,0,0,0.22)',
-        }}>
-          {cta}
-        </Link>
+      {/* Hint text — bottom right */}
+      <div style={{ position:'absolute', bottom:'14px', right:'16px', zIndex:1, pointerEvents:'none', fontSize:'11px', fontWeight:400, color:'rgba(255,255,255,0.5)', letterSpacing:'0.02em' }}>
+        {hintText} →
       </div>
 
       {/* ← arrow */}
       {slides.length > 1 && (
-        <button type="button" onClick={() => go(-1)} aria-label="Previous slide"
-          style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', zIndex:2, width:'34px', height:'34px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', border:'1.5px solid rgba(255,255,255,0.3)', color:'#fff', fontSize:'22px', lineHeight:1, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <button type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); go(-1) }} aria-label="Previous slide"
+          style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', zIndex:3, width:'34px', height:'34px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', border:'1.5px solid rgba(255,255,255,0.3)', color:'#fff', fontSize:'22px', lineHeight:1, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
           ‹
         </button>
       )}
 
       {/* → arrow */}
       {slides.length > 1 && (
-        <button type="button" onClick={() => go(1)} aria-label="Next slide"
-          style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', zIndex:2, width:'34px', height:'34px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', border:'1.5px solid rgba(255,255,255,0.3)', color:'#fff', fontSize:'22px', lineHeight:1, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <button type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); go(1) }} aria-label="Next slide"
+          style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', zIndex:3, width:'34px', height:'34px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', border:'1.5px solid rgba(255,255,255,0.3)', color:'#fff', fontSize:'22px', lineHeight:1, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
           ›
         </button>
       )}
 
       {/* Dot indicators */}
       {slides.length > 1 && (
-        <div style={{ position:'absolute', bottom:'13px', left:'50%', transform:'translateX(-50%)', display:'flex', gap:'6px', zIndex:2 }}>
+        <div style={{ position:'absolute', bottom:'13px', left:'50%', transform:'translateX(-50%)', display:'flex', gap:'6px', zIndex:3 }}>
           {slides.map((_, i) => (
-            <button key={i} type="button" onClick={() => goTo(i)} aria-label={`Go to slide ${i + 1}`}
+            <button key={i} type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); goTo(i) }} aria-label={`Go to slide ${i + 1}`}
               style={{ width: i === safeIdx ? '22px' : '7px', height:'7px', borderRadius:'4px', border:'none', padding:0, cursor:'pointer', background: i === safeIdx ? '#fff' : 'rgba(255,255,255,0.38)', transition:'all 0.3s ease' }} />
           ))}
         </div>
