@@ -258,12 +258,13 @@ function HeroSlider({ courses, statusByCourse, allCourses }: {
   if (!slides.length) return null
 
   const course = slides[safeIdx]
-  const grad = CARD_GRADIENTS[allCourses.indexOf(course) % CARD_GRADIENTS.length]
+  const solid = CARD_SOLIDS[allCourses.indexOf(course) % CARD_SOLIDS.length]
   const status = statusByCourse[course.id] || 'not_started'
+  const statusLabel = status === 'completed' ? 'Completed' : status === 'in_progress' ? 'In progress' : 'Not started'
   const cta = status === 'in_progress' ? 'Continue →' : status === 'completed' ? 'Review →' : 'Start course →'
 
   return (
-    <div className="gbch-slider" style={{ position:'relative', overflow:'hidden', background:grad, marginBottom:'28px' }}>
+    <div className="gbch-slider" style={{ position:'relative', overflow:'hidden', background:solid, marginBottom:'28px' }}>
 
       {/* Content — centered, fades between slides */}
       <div className="gbch-slider-pad" style={{
@@ -277,14 +278,9 @@ function HeroSlider({ courses, statusByCourse, allCourses }: {
           Latest courses assigned to you
         </div>
 
-        {/* Badges */}
-        <div style={{ display:'flex', gap:'7px', marginBottom:'12px', flexWrap:'wrap', justifyContent:'center' }}>
-          <span style={{ padding:'3px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(0,0,0,0.25)', color:'rgba(255,255,255,0.92)' }}>
-            {course.type === 'mandatory' ? '⚡ Mandatory' : '✦ Optional'}
-          </span>
-          {status === 'in_progress' && <span style={{ padding:'3px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(255,255,255,0.2)', color:'#fff' }}>● In progress</span>}
-          {status === 'completed'   && <span style={{ padding:'3px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(255,255,255,0.25)', color:'#fff' }}>✓ Completed</span>}
-          {status === 'not_started' && <span style={{ padding:'3px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(0,0,0,0.2)', color:'rgba(255,255,255,0.8)' }}>New</span>}
+        {/* Status — plain white, same style as card */}
+        <div style={{ fontSize:'12px', fontWeight:400, color:'rgba(255,255,255,0.85)', letterSpacing:'0.03em', marginBottom:'12px' }}>
+          {statusLabel}
         </div>
 
         {/* Course title */}
