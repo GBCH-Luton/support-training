@@ -33,6 +33,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!userLoading && !user) router.push('/login')
+    if (!userLoading && user?.must_reset_password) router.push('/reset-password')
   }, [user, userLoading, router])
 
   useEffect(() => {

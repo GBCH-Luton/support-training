@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-type Staff = { id: string; name: string; email: string; job_title: string; department: string; role: string; active: boolean }
+type Staff = { id: string; name: string; email: string; job_title: string; department: string; role: string; active: boolean; must_reset_password: boolean }
 type Department = { id: string; name: string; icon: string }
 
 export default function AdminStaff() {
@@ -45,7 +45,7 @@ export default function AdminStaff() {
   async function addStaff() {
     if (!newName.trim() || !newEmail.trim()) { alert('Name and email are required'); return }
     setSaving(true)
-    const { data } = await supabase.from('staff').insert({ name: newName, email: newEmail, job_title: newJobTitle, role: newRole, active: true }).select().single()
+    const { data } = await supabase.from('staff').insert({ name: newName, email: newEmail, job_title: newJobTitle, role: newRole, active: true, must_reset_password: true }).select().single()
     if (data && newDepts.length > 0) {
       await supabase.from('staff_departments').insert(newDepts.map((deptId) => ({ staff_id: data.id, department_id: deptId })))
     }
@@ -58,6 +58,11 @@ export default function AdminStaff() {
   async function toggleActive(id: string, current: boolean) {
     await supabase.from('staff').update({ active: !current }).eq('id', id)
     setStaff((prev) => prev.map((s) => s.id === id ? { ...s, active: !current } : s))
+  }
+
+  async function toggleForceReset(id: string, current: boolean) {
+    await supabase.from('staff').update({ must_reset_password: !current }).eq('id', id)
+    setStaff((prev) => prev.map((s) => s.id === id ? { ...s, must_reset_password: !current } : s))
   }
 
   async function toggleDept(staffId: string, deptId: string) {
@@ -147,6 +152,7 @@ export default function AdminStaff() {
                 <th style={th}>Role</th>
                 <th style={th}>Departments</th>
                 <th style={th}>Status</th>
+                <th style={th}>Force reset</th>
               </tr>
             </thead>
             <tbody>
@@ -177,6 +183,12 @@ export default function AdminStaff() {
                     <button onClick={() => toggleActive(s.id, s.active)}
                       style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, border: 'none', cursor: 'pointer', background: s.active ? 'rgba(15,110,86,0.1)' : 'rgba(0,0,0,0.06)', color: s.active ? '#0F6E56' : '#8A8A82' }}>
                       {s.active ? '🟢 Active' : '⬜ Inactive'}
+                    </button>
+                  </td>
+                  <td style={td}>
+                    <button onClick={() => toggleForceReset(s.id, s.must_reset_password)}
+                      style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, border: 'none', cursor: 'pointer', background: s.must_reset_password ? 'rgba(153,60,29,0.1)' : 'rgba(0,0,0,0.06)', color: s.must_reset_password ? '#993C1D' : '#8A8A82' }}>
+                      {s.must_reset_password ? '🔒 Required' : '✓ Done'}
                     </button>
                   </td>
                 </tr>

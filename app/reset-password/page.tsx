@@ -19,13 +19,19 @@ export default function ResetPasswordPage() {
     setLoading(true)
     setError('')
     const { error } = await supabase.auth.updateUser({ password })
-    setLoading(false)
     if (error) {
+      setLoading(false)
       setError(error.message)
-    } else {
-      setSuccess(true)
-      setTimeout(() => router.push('/login'), 2500)
+      return
     }
+    // Clear the force-reset flag
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (authUser?.email) {
+      await supabase.from('staff').update({ must_reset_password: false }).eq('email', authUser.email)
+    }
+    setLoading(false)
+    setSuccess(true)
+    setTimeout(() => router.push('/'), 2500)
   }
 
   return (
