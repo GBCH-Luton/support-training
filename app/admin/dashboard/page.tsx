@@ -30,12 +30,12 @@ export default function AdminDashboard() {
   }, [])
 
   const statTiles = [
-    { label: 'Total staff',    value: stats.totalStaff,    icon: '👥', color: '#1E3FB8' },
-    { label: 'Total courses',  value: stats.totalCourses,  icon: '📚', color: '#4A3FB0' },
-    { label: 'Live courses',   value: stats.liveCourses,   icon: '🟢', color: '#0F6E56' },
-    { label: 'Course sections',value: stats.totalSections, icon: '📄', color: '#BA7517' },
-    { label: 'Exam attempts',  value: stats.examAttempts,  icon: '📝', color: '#D4472A' },
-    { label: 'Exams passed',   value: stats.passedExams,   icon: '🎉', color: '#99355A' },
+    { label: 'Total staff',    value: stats.totalStaff,    color: '#1E3FB8', href: '/admin/staff' },
+    { label: 'Total courses',  value: stats.totalCourses,  color: '#4A3FB0', href: '/admin/courses' },
+    { label: 'Live courses',   value: stats.liveCourses,   color: '#0F6E56', href: '/admin/courses' },
+    { label: 'Course sections',value: stats.totalSections, color: '#BA7517', href: '/admin/courses' },
+    { label: 'Exam attempts',  value: stats.examAttempts,  color: '#D4472A', href: '/admin/enrolments' },
+    { label: 'Exams passed',   value: stats.passedExams,   color: '#99355A', href: '/admin/enrolments' },
   ]
 
   const quickLinks = [
@@ -66,10 +66,10 @@ export default function AdminDashboard() {
       {loading ? <p>Loading stats...</p> : (
         <div className="dash-tiles">
           {statTiles.map((tile) => (
-            <div key={tile.label} style={{ background: tile.color, borderRadius: '0', padding: '28px 20px', color: '#fff', textAlign: 'center' }}>
+            <Link key={tile.label} href={tile.href} style={{ background: tile.color, borderRadius: '0', padding: '28px 20px', color: '#fff', textAlign: 'center', textDecoration: 'none', display: 'block' }}>
               <div style={{ fontSize: '52px', fontWeight: 700, lineHeight: 1, marginBottom: '10px' }}>{tile.value}</div>
               <div style={{ fontSize: '12px', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{tile.label}</div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
