@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -12,6 +12,16 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
+  useEffect(() => {
+    // PKCE flow: Supabase delivers a ?code= param — exchange it for a session
+    const code = new URLSearchParams(window.location.search).get('code')
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) setError('This reset link has expired or is invalid. Please request a new one from the login page.')
+      })
+    }
+  }, [])
+
   async function handleReset() {
     if (!password.trim()) { setError('Please enter a new password'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return }
@@ -21,7 +31,7 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password })
     if (error) {
       setLoading(false)
-      setError(error.message)
+      setError(error.message || 'Something went wrong. Your reset link may have expired — please request a new one from the login page.')
       return
     }
     // Clear the force-reset flag
