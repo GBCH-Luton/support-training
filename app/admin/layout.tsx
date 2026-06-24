@@ -62,7 +62,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           .admin-shell { flex-direction:column; }
           .admin-sidebar { display:none; }
           .admin-topbar { display:flex; align-items:center; justify-content:space-between; background:#FFFFFF; padding:14px 18px; border-bottom:1px solid rgba(0,0,0,0.08); position:sticky; top:0; z-index:50; }
-          .admin-mobile-menu { display:${menuOpen ? 'block' : 'none'}; background:#FFFFFF; padding:12px 14px; border-bottom:1px solid rgba(0,0,0,0.08); }
+          .admin-mobile-menu { background:#FFFFFF; padding:12px 14px; border-bottom:1px solid rgba(0,0,0,0.08); }
           .admin-main { padding:20px 18px; }
         }
         @media (min-width:821px) { .admin-topbar, .admin-mobile-menu { display:none !important; } }
@@ -100,7 +100,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Mobile dropdown menu */}
-        <div className="admin-mobile-menu">
+        <div className="admin-mobile-menu" style={{ display: menuOpen ? 'block' : 'none' }}>
           {navLinks}
           <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', marginTop: '8px', paddingTop: '8px' }}>
             <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px', borderRadius: '10px', fontSize: '14px', fontWeight: 500, color: '#8A8A82', textDecoration: 'none' }}>← Back to portal</Link>
