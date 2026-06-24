@@ -61,6 +61,8 @@ export default function AdminStaff() {
   const [sortDir, setSortDir]         = useState<'asc'|'desc'>('asc')
   const [openDeptMenu, setOpenDeptMenu] = useState<string|null>(null)
   const [preview, setPreview] = useState<{ url: string; x: number; y: number } | null>(null)
+  const [selectedId, setSelectedId] = useState<string|null>(null)
+  const [filterStatus, setFilterStatus] = useState<''|'active'|'inactive'>('')
 
   const [showRoles, setShowRoles]       = useState(false)
   const [editingRole, setEditingRole]   = useState<Role|null>(null)
@@ -207,15 +209,16 @@ export default function AdminStaff() {
     let list = q ? staff.filter(s =>
       s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.job_title||'').toLowerCase().includes(q)
     ) : [...staff]
-    if (filterRole) list = list.filter(s => s.role === filterRole)
-    if (filterDept) list = list.filter(s => (staffDepts[s.id] || []).includes(filterDept))
-    if (filterJob)  list = list.filter(s => s.job_title === filterJob)
+    if (filterRole)   list = list.filter(s => s.role === filterRole)
+    if (filterDept)   list = list.filter(s => (staffDepts[s.id] || []).includes(filterDept))
+    if (filterJob)    list = list.filter(s => s.job_title === filterJob)
+    if (filterStatus) list = list.filter(s => s.active === (filterStatus === 'active'))
     return list.sort((a, b) => {
       const av = sortKey === 'active' ? String(a.active) : (a[sortKey as keyof Staff] as string || '')
       const bv = sortKey === 'active' ? String(b.active) : (b[sortKey as keyof Staff] as string || '')
       return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
     })
-  }, [staff, search, filterRole, filterDept, filterJob, staffDepts, sortKey, sortDir])
+  }, [staff, search, filterRole, filterDept, filterJob, filterStatus, staffDepts, sortKey, sortDir])
 
   return (
     <div>
@@ -354,8 +357,21 @@ export default function AdminStaff() {
           <option value="">All job titles</option>
           {uniqueJobTitles.map(j=><option key={j} value={j}>{j}</option>)}
         </select>
-        {(filterRole || filterDept || filterJob || search) && (
-          <button type="button" onClick={()=>{ setFilterRole(''); setFilterDept(''); setFilterJob(''); setSearch('') }}
+        {/* Status toggle */}
+        <div style={{ display:'flex', background:'#F4F3EF', border:'1px solid rgba(0,0,0,0.12)', borderRadius:'8px', padding:'3px', gap:'2px', flexShrink:0 }}>
+          {(['','active','inactive'] as const).map(val => {
+            const labels = { '':'All', active:'Active', inactive:'Inactive' }
+            const active = filterStatus === val
+            return (
+              <button key={val} type="button" onClick={() => setFilterStatus(val)}
+                style={{ padding:'5px 12px', fontSize:'12px', fontWeight:600, borderRadius:'6px', border:'none', cursor:'pointer', whiteSpace:'nowrap', background: active ? '#FFFFFF' : 'transparent', color: active ? (val === 'active' ? '#0F6E56' : val === 'inactive' ? '#993C1D' : '#1A1A18') : '#8A8A82', boxShadow: active ? '0 1px 4px rgba(0,0,0,0.12)' : 'none', transition:'all 0.15s' }}>
+                {val === 'active' ? '🟢 ' : val === 'inactive' ? '🔴 ' : ''}{labels[val]}
+              </button>
+            )
+          })}
+        </div>
+        {(filterRole || filterDept || filterJob || filterStatus || search) && (
+          <button type="button" onClick={()=>{ setFilterRole(''); setFilterDept(''); setFilterJob(''); setFilterStatus(''); setSearch('') }}
             style={{ fontSize:'12px', color:'#993C1D', background:'rgba(153,60,29,0.07)', border:'1px solid rgba(153,60,29,0.2)', borderRadius:'8px', padding:'7px 12px', cursor:'pointer', whiteSpace:'nowrap' }}>
             ✕ Clear filters
           </button>
@@ -391,7 +407,8 @@ export default function AdminStaff() {
                   const assignedDepts = departments.filter(d=>(staffDepts[s.id]||[]).includes(d.id))
                   const deptOpen = openDeptMenu === s.id
                   return (
-                    <tr key={s.id} style={{ borderBottom:'1px solid rgba(0,0,0,0.06)', opacity:s.active?1:0.5 }}>
+                    <tr key={s.id} onClick={() => setSelectedId(p => p === s.id ? null : s.id)}
+                      style={{ borderBottom:'1px solid rgba(0,0,0,0.06)', opacity:s.active?1:0.5, cursor:'pointer', background: selectedId === s.id ? 'rgba(45,91,227,0.06)' : undefined, outline: selectedId === s.id ? '2px solid rgba(45,91,227,0.3)' : undefined, outlineOffset:'-2px' }}>
                       <td style={td}>
                         <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
                           <label
