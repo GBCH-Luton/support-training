@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-type Staff = { id: string; name: string; role: string }
+type Staff = { id: string; name: string; role: string; photo_url?: string }
 type Course = { id: string; title: string; icon: string; type: string }
 type Department = { id: string; name: string }
 type Enrolment = { id: string; staff_id: string; course_id: string; mandatory: boolean; due_date: string | null; enrolled_on: string }
@@ -38,7 +38,7 @@ export default function AdminEnrolments() {
 
   async function fetchAll() {
     const [staffRes, courseRes, enrolRes, deptRes, deptEnrolRes] = await Promise.all([
-      supabase.from('staff').select('id, name, role').eq('active', true).order('name'),
+      supabase.from('staff').select('id, name, role, photo_url').eq('active', true).order('name'),
       supabase.from('courses').select('id, title, icon, type').eq('status', 'live').order('title'),
       supabase.from('enrolments').select('*').order('enrolled_on', { ascending: false }),
       supabase.from('departments').select('id, name').order('name'),
@@ -112,10 +112,12 @@ export default function AdminEnrolments() {
       id: string; kind: 'individual' | 'department'
       name: string; course: string; courseIcon: string
       mandatory: boolean; due: string | null; enrolled: string
+      photoUrl?: string
     }
     const individual: Row[] = enrolments.map((e) => ({
       id: e.id, kind: 'individual',
       name: getStaff(e.staff_id)?.name || '—',
+      photoUrl: getStaff(e.staff_id)?.photo_url,
       course: getCourse(e.course_id)?.title || '—',
       courseIcon: getCourse(e.course_id)?.icon || '',
       mandatory: e.mandatory, due: e.due_date, enrolled: e.enrolled_on,
@@ -291,8 +293,14 @@ export default function AdminEnrolments() {
                 <tr key={`${row.kind}-${row.id}`} style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                   <td style={td}>
                     {row.kind === 'department'
-                      ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><span style={{ fontSize: '13px' }}>🏢</span><strong>{row.name}</strong></span>
-                      : <strong>{row.name}</strong>
+                      ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><span style={{ fontSize: '13px' }}>🏢</span><strong>{row.name}</strong></span>
+                      : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+                          {row.photoUrl
+                            ? <img src={row.photoUrl} alt={row.name} style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(0,0,0,0.1)', flexShrink: 0 }} />
+                            : <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#1E3FB8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>{row.name.charAt(0).toUpperCase()}</div>
+                          }
+                          <strong>{row.name}</strong>
+                        </span>
                     }
                   </td>
                   <td style={td}>

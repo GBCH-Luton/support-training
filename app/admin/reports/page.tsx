@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-type StaffRow    = { id: string; name: string; email: string }
+type StaffRow    = { id: string; name: string; email: string; photo_url?: string }
 type CourseRow   = { id: string; title: string }
 type Enrolment   = { staff_id: string; course_id: string; mandatory: boolean; due_date: string | null }
 type ExamAttempt = { staff_id: string; course_id: string; score: number; passed: boolean; date_taken: string }
@@ -13,7 +13,7 @@ type Status = 'passed' | 'failed' | 'in_progress' | 'not_started'
 type SortKey = 'name' | 'course' | 'status' | 'score' | 'attempts' | 'last'
 
 type ReportRow = {
-  staffId: string; staffName: string; staffEmail: string
+  staffId: string; staffName: string; staffEmail: string; staffPhoto?: string
   courseId: string; courseTitle: string
   mandatory: boolean; dueDate: string | null
   status: Status
@@ -50,7 +50,7 @@ export default function AdminReports() {
   useEffect(() => {
     async function load() {
       const [staffRes, courseRes, enrolRes, attemptRes, progRes] = await Promise.all([
-        supabase.from('staff').select('id, name, email').order('name'),
+        supabase.from('staff').select('id, name, email, photo_url').order('name'),
         supabase.from('courses').select('id, title').order('title'),
         supabase.from('enrolments').select('staff_id, course_id, mandatory, due_date'),
         supabase.from('exam_attempts').select('staff_id, course_id, score, passed, date_taken'),
@@ -84,7 +84,7 @@ export default function AdminReports() {
       const sorted = [...myAttempts].sort((a, b) => b.date_taken.localeCompare(a.date_taken))
 
       return {
-        staffId: e.staff_id,   staffName: member?.name || '—',  staffEmail: member?.email || '—',
+        staffId: e.staff_id,   staffName: member?.name || '—',  staffEmail: member?.email || '—',  staffPhoto: member?.photo_url,
         courseId: e.course_id, courseTitle: course?.title || '—',
         mandatory: e.mandatory, dueDate: e.due_date,
         status, bestScore, attempts: myAttempts.length,
@@ -210,8 +210,16 @@ export default function AdminReports() {
                 return (
                   <tr key={`${row.staffId}-${row.courseId}`} style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', background: i % 2 === 1 ? '#FAFAF8' : '#FFFFFF' }}>
                     <td style={td}>
-                      <div style={{ fontWeight: 600 }}>{row.staffName}</div>
-                      <div style={{ fontSize: '11px', color: '#8A8A82' }}>{row.staffEmail}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {row.staffPhoto
+                          ? <img src={row.staffPhoto} alt={row.staffName} style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(0,0,0,0.1)', flexShrink: 0 }} />
+                          : <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#1E3FB8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>{row.staffName.charAt(0).toUpperCase()}</div>
+                        }
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{row.staffName}</div>
+                          <div style={{ fontSize: '11px', color: '#8A8A82' }}>{row.staffEmail}</div>
+                        </div>
+                      </div>
                     </td>
                     <td style={td}>{row.courseTitle}</td>
                     <td style={td}>
