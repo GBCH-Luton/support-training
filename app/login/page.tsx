@@ -23,7 +23,10 @@ export default function LoginPage() {
     })
     setLoading(false)
     if (error) {
-      setError(error.message)
+      const msg = error.message
+      setError(msg && msg !== '{}' && msg !== '[]'
+        ? msg
+        : 'Failed to send reset email. Check your email address is correct, or try again in a few minutes (email rate limits may apply).')
     } else {
       setSuccess('Check your inbox — we sent a password reset link.')
     }
