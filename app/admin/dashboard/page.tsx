@@ -66,10 +66,9 @@ export default function AdminDashboard() {
       {loading ? <p>Loading stats...</p> : (
         <div className="dash-tiles">
           {statTiles.map((tile) => (
-            <div key={tile.label} style={{ background: tile.color, borderRadius: '0', padding: '20px', color: '#fff' }}>
-              <div style={{ fontSize: '24px', marginBottom: '10px' }}>{tile.icon}</div>
-              <div style={{ fontSize: '32px', fontWeight: 700, marginBottom: '2px' }}>{tile.value}</div>
-              <div style={{ fontSize: '12px', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{tile.label}</div>
+            <div key={tile.label} style={{ background: tile.color, borderRadius: '0', padding: '28px 20px', color: '#fff', textAlign: 'center' }}>
+              <div style={{ fontSize: '52px', fontWeight: 700, lineHeight: 1, marginBottom: '10px' }}>{tile.value}</div>
+              <div style={{ fontSize: '12px', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{tile.label}</div>
             </div>
           ))}
         </div>
