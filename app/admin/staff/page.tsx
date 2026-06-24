@@ -60,6 +60,7 @@ export default function AdminStaff() {
   const [sortKey, setSortKey]         = useState<SortKey>('name')
   const [sortDir, setSortDir]         = useState<'asc'|'desc'>('asc')
   const [openDeptMenu, setOpenDeptMenu] = useState<string|null>(null)
+  const [preview, setPreview] = useState<{ url: string; x: number; y: number } | null>(null)
 
   const [showRoles, setShowRoles]       = useState(false)
   const [editingRole, setEditingRole]   = useState<Role|null>(null)
@@ -361,6 +362,13 @@ export default function AdminStaff() {
         )}
       </div>
 
+      {/* Photo hover preview */}
+      {preview && (
+        <div style={{ position:'fixed', left:preview.x, top:preview.y, zIndex:9999, pointerEvents:'none', background:'#fff', borderRadius:'50%', padding:'5px', boxShadow:'0 10px 40px rgba(0,0,0,0.22)' }}>
+          <img src={preview.url} alt="Preview" style={{ width:'150px', height:'150px', borderRadius:'50%', objectFit:'cover', display:'block' }} />
+        </div>
+      )}
+
       {/* ── Table ── */}
       {loading ? <p>Loading…</p> : (
         <div style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:'12px', overflow:'auto' }}>
@@ -386,12 +394,20 @@ export default function AdminStaff() {
                     <tr key={s.id} style={{ borderBottom:'1px solid rgba(0,0,0,0.06)', opacity:s.active?1:0.5 }}>
                       <td style={td}>
                         <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                          <label title="Click to upload photo" style={{ cursor:'pointer', flexShrink:0, display:'block' }}>
+                          <label
+                            title="Click to upload or change photo"
+                            style={{ cursor:'pointer', flexShrink:0, display:'block', position:'relative' }}
+                            onMouseEnter={s.photo_url ? e => {
+                              const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                              setPreview({ url: s.photo_url!, x: r.right + 14, y: r.top - 60 })
+                            } : undefined}
+                            onMouseLeave={s.photo_url ? () => setPreview(null) : undefined}
+                          >
                             {s.photo_url
                               ? <img src={s.photo_url} alt={s.name} style={{ width:'34px', height:'34px', borderRadius:'50%', objectFit:'cover', border:'2px solid rgba(0,0,0,0.1)', display:'block' }} />
                               : <div style={{ width:'34px', height:'34px', borderRadius:'50%', background:'linear-gradient(135deg,#6FA0F5,#2D5BE3)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'13px', fontWeight:700, flexShrink:0 }}>{s.name.charAt(0).toUpperCase()}</div>
                             }
-                            <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPhoto(s.id, f); e.target.value = '' }} />
+                            <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) { setPreview(null); uploadPhoto(s.id, f) } e.target.value = '' }} />
                           </label>
                           <strong>{s.name}</strong>
                         </div>
