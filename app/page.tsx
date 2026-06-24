@@ -108,17 +108,17 @@ export default function Home() {
         .gbch-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
         .gbch-actions { display:flex; align-items:center; gap:10px; }
         .gbch-menu-btn { display:none; }
-        .gbch-slider { height:230px; border-radius:20px; }
-        .gbch-slider-pad { padding:32px 130px 36px 36px; }
+        .gbch-slider { height:240px; border-radius:0; margin-left:-5%; margin-right:-5%; }
+        .gbch-slider-pad { padding:36px 80px; }
         .gbch-slider-title { font-size:22px; }
         .gbch-slider-desc { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         @media (max-width: 640px) {
           .gbch-grid { grid-template-columns:1fr; }
           .gbch-actions { display:${menuOpen ? 'flex' : 'none'}; flex-direction:column; align-items:stretch; width:100%; gap:8px; margin-top:10px; }
           .gbch-menu-btn { display:inline-flex; }
-          .gbch-slider { height:190px; border-radius:16px; }
-          .gbch-slider-pad { padding:22px 70px 28px 22px; }
-          .gbch-slider-title { font-size:17px; }
+          .gbch-slider { height:200px; }
+          .gbch-slider-pad { padding:24px 56px; }
+          .gbch-slider-title { font-size:18px; }
           .gbch-slider-desc { display:none; }
         }
       `}</style>
@@ -161,7 +161,13 @@ export default function Home() {
 
         {/* Hero slider */}
         {!loading && allowedCourses.length > 0 && (
-          <HeroSlider courses={allowedCourses} statusByCourse={statusByCourse} allCourses={courses} />
+          <div style={{ marginBottom:'28px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px' }}>
+              <span style={{ fontSize:'13px', fontWeight:700, color:'#1A1A18', letterSpacing:'0.01em' }}>Latest courses assigned to you</span>
+              <span style={{ fontSize:'12px', color:'#8A8A82' }}>— {allowedCourses.length} course{allowedCourses.length !== 1 ? 's' : ''} total</span>
+            </div>
+            <HeroSlider courses={allowedCourses} statusByCourse={statusByCourse} allCourses={courses} />
+          </div>
         )}
 
         {/* Category pills */}
@@ -248,16 +254,6 @@ function HeroSlider({ courses, statusByCourse, allCourses }: {
 
   const safeIdx = slides.length ? index % slides.length : 0
 
-  // Auto-advance every 5 s
-  useEffect(() => {
-    if (slides.length <= 1) return
-    const t = setInterval(() => {
-      setFading(true)
-      setTimeout(() => { setIndex(i => (i + 1) % slides.length); setFading(false) }, 280)
-    }, 5000)
-    return () => clearInterval(t)
-  }, [slides.length])
-
   function go(dir: number) {
     if (fading || slides.length < 2) return
     setFading(true)
@@ -278,56 +274,55 @@ function HeroSlider({ courses, statusByCourse, allCourses }: {
   const cta = status === 'in_progress' ? 'Continue →' : status === 'completed' ? 'Review →' : 'Start course →'
 
   return (
-    <div className="gbch-slider" style={{ position:'relative', overflow:'hidden', marginBottom:'28px', background:grad }}>
+    <div className="gbch-slider" style={{ position:'relative', overflow:'hidden', background:grad }}>
 
-      {/* Decorative orbs */}
-      <div style={{ position:'absolute', right:'-60px', top:'-60px', width:'280px', height:'280px', borderRadius:'50%', background:'rgba(255,255,255,0.08)', pointerEvents:'none' }} />
-      <div style={{ position:'absolute', right:'90px', bottom:'-80px', width:'220px', height:'220px', borderRadius:'50%', background:'rgba(255,255,255,0.05)', pointerEvents:'none' }} />
-      <div style={{ position:'absolute', right:'230px', top:'0px', width:'110px', height:'110px', borderRadius:'50%', background:'rgba(255,255,255,0.06)', pointerEvents:'none' }} />
+      {/* Decorative orbs — spread left and right */}
+      <div style={{ position:'absolute', left:'-80px', top:'-80px', width:'300px', height:'300px', borderRadius:'50%', background:'rgba(255,255,255,0.07)', pointerEvents:'none' }} />
+      <div style={{ position:'absolute', right:'-80px', top:'-80px', width:'300px', height:'300px', borderRadius:'50%', background:'rgba(255,255,255,0.07)', pointerEvents:'none' }} />
+      <div style={{ position:'absolute', left:'50%', bottom:'-90px', transform:'translateX(-50%)', width:'240px', height:'240px', borderRadius:'50%', background:'rgba(255,255,255,0.05)', pointerEvents:'none' }} />
 
-      {/* Large background icon */}
-      <div style={{ position:'absolute', right:'28px', top:'50%', transform:'translateY(-50%)', fontSize:'120px', lineHeight:1, opacity:0.14, pointerEvents:'none', userSelect:'none' }}>
+      {/* Large background icon — centered */}
+      <div style={{ position:'absolute', left:'50%', top:'50%', transform:'translate(-50%,-50%)', fontSize:'140px', lineHeight:1, opacity:0.09, pointerEvents:'none', userSelect:'none' }}>
         {course.icon}
       </div>
 
-      {/* Content — fades between slides */}
+      {/* Content — centered, fades between slides */}
       <div className="gbch-slider-pad" style={{
         position:'relative', zIndex:1, height:'100%', display:'flex',
-        flexDirection:'column', justifyContent:'center', boxSizing:'border-box',
+        flexDirection:'column', justifyContent:'center', alignItems:'center',
+        textAlign:'center', boxSizing:'border-box',
         opacity: fading ? 0 : 1, transition:'opacity 0.28s ease',
       }}>
         {/* Badges */}
-        <div style={{ display:'flex', gap:'7px', marginBottom:'11px', flexWrap:'wrap' }}>
-          <span style={{ padding:'3px 11px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(0,0,0,0.22)', color:'rgba(255,255,255,0.92)' }}>
+        <div style={{ display:'flex', gap:'7px', marginBottom:'12px', flexWrap:'wrap', justifyContent:'center' }}>
+          <span style={{ padding:'3px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(0,0,0,0.25)', color:'rgba(255,255,255,0.92)' }}>
             {course.type === 'mandatory' ? '⚡ Mandatory' : '✦ Optional'}
           </span>
-          {status === 'in_progress' && <span style={{ padding:'3px 11px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(255,255,255,0.2)', color:'#fff' }}>● In progress</span>}
-          {status === 'completed'   && <span style={{ padding:'3px 11px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(255,255,255,0.25)', color:'#fff' }}>✓ Completed</span>}
-          {status === 'not_started' && <span style={{ padding:'3px 11px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(0,0,0,0.18)', color:'rgba(255,255,255,0.8)' }}>New</span>}
+          {status === 'in_progress' && <span style={{ padding:'3px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(255,255,255,0.2)', color:'#fff' }}>● In progress</span>}
+          {status === 'completed'   && <span style={{ padding:'3px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(255,255,255,0.25)', color:'#fff' }}>✓ Completed</span>}
+          {status === 'not_started' && <span style={{ padding:'3px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(0,0,0,0.2)', color:'rgba(255,255,255,0.8)' }}>New</span>}
         </div>
 
-        {/* Title */}
-        <div className="gbch-slider-title" style={{ fontWeight:800, color:'#fff', lineHeight:1.2, marginBottom:'8px', textShadow:'0 2px 12px rgba(0,0,0,0.18)' }}>
+        {/* Course title */}
+        <div className="gbch-slider-title" style={{ fontWeight:800, color:'#fff', lineHeight:1.2, marginBottom:'8px', textShadow:'0 2px 16px rgba(0,0,0,0.22)' }}>
           {course.title}
         </div>
 
         {/* Description — hidden on mobile via CSS */}
-        <div className="gbch-slider-desc" style={{ fontSize:'13px', color:'rgba(255,255,255,0.78)', lineHeight:1.55, marginBottom:'18px', maxWidth:'440px' }}>
+        <div className="gbch-slider-desc" style={{ fontSize:'13px', color:'rgba(255,255,255,0.78)', lineHeight:1.6, marginBottom:'20px', maxWidth:'480px' }}>
           {course.description}
         </div>
 
         {/* CTA */}
-        <div>
-          <Link href={`/courses/${course.id}`} style={{
-            display:'inline-flex', alignItems:'center', gap:'6px',
-            padding:'10px 22px', background:'rgba(255,255,255,0.95)',
-            borderRadius:'10px', fontSize:'13px', fontWeight:700,
-            textDecoration:'none', color:'#1A1A18',
-            boxShadow:'0 4px 18px rgba(0,0,0,0.2)',
-          }}>
-            {cta}
-          </Link>
-        </div>
+        <Link href={`/courses/${course.id}`} style={{
+          display:'inline-flex', alignItems:'center', gap:'6px',
+          padding:'11px 26px', background:'rgba(255,255,255,0.95)',
+          borderRadius:'10px', fontSize:'13px', fontWeight:700,
+          textDecoration:'none', color:'#1A1A18',
+          boxShadow:'0 4px 20px rgba(0,0,0,0.22)',
+        }}>
+          {cta}
+        </Link>
       </div>
 
       {/* ← arrow */}
