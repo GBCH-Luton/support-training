@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-type Staff      = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; must_reset_password: boolean }
+type Staff      = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; must_reset_password: boolean; photo_url?: string }
 type Department = { id: string; name: string; icon: string }
 type Role       = { id: string; name: string; label: string; color: string; bg_color: string; sort_order: number; is_admin: boolean }
 type SortKey    = 'name' | 'email' | 'job_title' | 'role' | 'active'
@@ -79,7 +79,7 @@ export default function AdminStaff() {
 
   async function fetchAll() {
     const [staffRes, deptRes, sdRes, rolesRes] = await Promise.all([
-      supabase.from('staff').select('id,name,email,job_title,role,active,must_reset_password').order('name'),
+      supabase.from('staff').select('id,name,email,job_title,role,active,must_reset_password,photo_url').order('name'),
       supabase.from('departments').select('*').order('sort_order'),
       supabase.from('staff_departments').select('staff_id,department_id'),
       supabase.from('roles').select('*').order('sort_order'),
@@ -132,6 +132,16 @@ export default function AdminStaff() {
       await supabase.from('staff_departments').insert({ staff_id: staffId, department_id: deptId })
       setStaffDepts(p => ({ ...p, [staffId]: [...cur, deptId] }))
     }
+  }
+
+  async function uploadPhoto(staffId: string, file: File) {
+    const ext = file.name.split('.').pop() || 'jpg'
+    const path = `${staffId}.${ext}`
+    const { error } = await supabase.storage.from('staff-photos').upload(path, file, { upsert: true })
+    if (error) { alert('Upload failed: ' + error.message); return }
+    const { data: { publicUrl } } = supabase.storage.from('staff-photos').getPublicUrl(path)
+    await supabase.from('staff').update({ photo_url: publicUrl }).eq('id', staffId)
+    setStaff(p => p.map(s => s.id === staffId ? { ...s, photo_url: publicUrl } : s))
   }
 
   // ── Roles ────────────────────────────────────────────────────────────────────
@@ -356,7 +366,18 @@ export default function AdminStaff() {
                   const deptOpen = openDeptMenu === s.id
                   return (
                     <tr key={s.id} style={{ borderBottom:'1px solid rgba(0,0,0,0.06)', opacity:s.active?1:0.5 }}>
-                      <td style={td}><strong>{s.name}</strong></td>
+                      <td style={td}>
+                        <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                          <label title="Click to upload photo" style={{ cursor:'pointer', flexShrink:0, display:'block' }}>
+                            {s.photo_url
+                              ? <img src={s.photo_url} alt={s.name} style={{ width:'34px', height:'34px', borderRadius:'50%', objectFit:'cover', border:'2px solid rgba(0,0,0,0.1)', display:'block' }} />
+                              : <div style={{ width:'34px', height:'34px', borderRadius:'50%', background:'linear-gradient(135deg,#6FA0F5,#2D5BE3)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'13px', fontWeight:700, flexShrink:0 }}>{s.name.charAt(0).toUpperCase()}</div>
+                            }
+                            <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPhoto(s.id, f); e.target.value = '' }} />
+                          </label>
+                          <strong>{s.name}</strong>
+                        </div>
+                      </td>
                       <td style={{ ...td, color:'#5A5A55' }}>{s.email}</td>
                       <td style={td}>{s.job_title||'—'}</td>
                       <td style={td}>

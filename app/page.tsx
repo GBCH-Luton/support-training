@@ -108,7 +108,7 @@ export default function Home() {
         .gbch-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
         .gbch-actions { display:flex; align-items:center; gap:10px; }
         .gbch-menu-btn { display:none; }
-        .gbch-slider { height:240px; border-radius:0; margin-left:-5%; margin-right:-5%; }
+        .gbch-slider { height:240px; }
         .gbch-slider-pad { padding:36px 80px; }
         .gbch-slider-title { font-size:22px; }
         .gbch-slider-desc { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
@@ -161,13 +161,7 @@ export default function Home() {
 
         {/* Hero slider */}
         {!loading && allowedCourses.length > 0 && (
-          <div style={{ marginBottom:'28px' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px' }}>
-              <span style={{ fontSize:'13px', fontWeight:700, color:'#1A1A18', letterSpacing:'0.01em' }}>Latest courses assigned to you</span>
-              <span style={{ fontSize:'12px', color:'#8A8A82' }}>— {allowedCourses.length} course{allowedCourses.length !== 1 ? 's' : ''} total</span>
-            </div>
-            <HeroSlider courses={allowedCourses} statusByCourse={statusByCourse} allCourses={courses} />
-          </div>
+          <HeroSlider courses={allowedCourses} statusByCourse={statusByCourse} allCourses={courses} />
         )}
 
         {/* Category pills */}
@@ -192,7 +186,7 @@ export default function Home() {
               const grad = CARD_GRADIENTS[i % CARD_GRADIENTS.length]
               return (
                 <Link key={course.id} href={`/courses/${course.id}`}
-                  style={{ background: '#FFFFFF', borderRadius: '18px', padding: '20px', boxShadow: '0 3px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.05)', textDecoration: 'none', color: 'inherit', display: 'block', transition: 'transform .15s' }}>
+                  style={{ background: '#FFFFFF', borderRadius: '0', padding: '20px', boxShadow: '0 3px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.05)', textDecoration: 'none', color: 'inherit', display: 'block', transition: 'transform .15s' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
                     <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>{course.icon}</div>
                     <StatusBadge status={status} />
@@ -274,17 +268,7 @@ function HeroSlider({ courses, statusByCourse, allCourses }: {
   const cta = status === 'in_progress' ? 'Continue →' : status === 'completed' ? 'Review →' : 'Start course →'
 
   return (
-    <div className="gbch-slider" style={{ position:'relative', overflow:'hidden', background:grad }}>
-
-      {/* Decorative orbs — spread left and right */}
-      <div style={{ position:'absolute', left:'-80px', top:'-80px', width:'300px', height:'300px', borderRadius:'50%', background:'rgba(255,255,255,0.07)', pointerEvents:'none' }} />
-      <div style={{ position:'absolute', right:'-80px', top:'-80px', width:'300px', height:'300px', borderRadius:'50%', background:'rgba(255,255,255,0.07)', pointerEvents:'none' }} />
-      <div style={{ position:'absolute', left:'50%', bottom:'-90px', transform:'translateX(-50%)', width:'240px', height:'240px', borderRadius:'50%', background:'rgba(255,255,255,0.05)', pointerEvents:'none' }} />
-
-      {/* Large background icon — centered */}
-      <div style={{ position:'absolute', left:'50%', top:'50%', transform:'translate(-50%,-50%)', fontSize:'140px', lineHeight:1, opacity:0.09, pointerEvents:'none', userSelect:'none' }}>
-        {course.icon}
-      </div>
+    <div className="gbch-slider" style={{ position:'relative', overflow:'hidden', background:grad, marginBottom:'28px' }}>
 
       {/* Content — centered, fades between slides */}
       <div className="gbch-slider-pad" style={{
@@ -293,6 +277,11 @@ function HeroSlider({ courses, statusByCourse, allCourses }: {
         textAlign:'center', boxSizing:'border-box',
         opacity: fading ? 0 : 1, transition:'opacity 0.28s ease',
       }}>
+        {/* Section label */}
+        <div style={{ fontSize:'11px', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.65)', marginBottom:'14px' }}>
+          Latest courses assigned to you
+        </div>
+
         {/* Badges */}
         <div style={{ display:'flex', gap:'7px', marginBottom:'12px', flexWrap:'wrap', justifyContent:'center' }}>
           <span style={{ padding:'3px 12px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(0,0,0,0.25)', color:'rgba(255,255,255,0.92)' }}>
