@@ -134,10 +134,28 @@ export default function AdminStaff() {
     }
   }
 
+  function compressImage(file: File, maxPx = 400, quality = 0.82): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width  = Math.round(img.width  * scale)
+        canvas.height = Math.round(img.height * scale)
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('Compression failed')), 'image/jpeg', quality)
+      }
+      img.onerror = reject
+      img.src = url
+    })
+  }
+
   async function uploadPhoto(staffId: string, file: File) {
-    const ext = file.name.split('.').pop() || 'jpg'
-    const path = `${staffId}.${ext}`
-    const { error } = await supabase.storage.from('staff-photos').upload(path, file, { upsert: true })
+    const blob = await compressImage(file)
+    const path = `${staffId}.jpg`
+    const { error } = await supabase.storage.from('staff-photos').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
     if (error) { alert('Upload failed: ' + error.message); return }
     const { data: { publicUrl } } = supabase.storage.from('staff-photos').getPublicUrl(path)
     await supabase.from('staff').update({ photo_url: publicUrl }).eq('id', staffId)
