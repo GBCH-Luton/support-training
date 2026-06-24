@@ -1,7 +1,7 @@
 // Practice pull request - testing the workflow
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useUser } from '@/lib/useUser'
@@ -108,10 +108,18 @@ export default function Home() {
         .gbch-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
         .gbch-actions { display:flex; align-items:center; gap:10px; }
         .gbch-menu-btn { display:none; }
+        .gbch-slider { height:230px; border-radius:20px; }
+        .gbch-slider-pad { padding:32px 130px 36px 36px; }
+        .gbch-slider-title { font-size:22px; }
+        .gbch-slider-desc { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         @media (max-width: 640px) {
           .gbch-grid { grid-template-columns:1fr; }
           .gbch-actions { display:${menuOpen ? 'flex' : 'none'}; flex-direction:column; align-items:stretch; width:100%; gap:8px; margin-top:10px; }
           .gbch-menu-btn { display:inline-flex; }
+          .gbch-slider { height:190px; border-radius:16px; }
+          .gbch-slider-pad { padding:22px 70px 28px 22px; }
+          .gbch-slider-title { font-size:17px; }
+          .gbch-slider-desc { display:none; }
         }
       `}</style>
 
@@ -150,6 +158,11 @@ export default function Home() {
             </button>
           </div>
         </div>
+
+        {/* Hero slider */}
+        {!loading && allowedCourses.length > 0 && (
+          <HeroSlider courses={allowedCourses} statusByCourse={statusByCourse} allCourses={courses} />
+        )}
 
         {/* Category pills */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap', overflowX: 'auto', paddingBottom: '4px' }}>
@@ -216,4 +229,132 @@ function StatusBadge({ status }: { status: 'completed' | 'in_progress' | 'not_st
 
 function pillStyle(active: boolean): React.CSSProperties {
   return { padding: '7px 15px', borderRadius: '20px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', border: active ? '1px solid #2D5BE3' : '1px solid rgba(0,0,0,0.12)', background: active ? '#2D5BE3' : '#FFFFFF', color: active ? '#fff' : '#5A5A55' }
+}
+
+function HeroSlider({ courses, statusByCourse, allCourses }: {
+  courses: Course[]
+  statusByCourse: Record<string, 'completed' | 'in_progress' | 'not_started'>
+  allCourses: Course[]
+}) {
+  const slides = useMemo(() => {
+    const order = { in_progress: 0, not_started: 1, completed: 2 }
+    return [...courses]
+      .sort((a, b) => (order[statusByCourse[a.id] ?? 'not_started'] ?? 1) - (order[statusByCourse[b.id] ?? 'not_started'] ?? 1))
+      .slice(0, 3)
+  }, [courses, statusByCourse])
+
+  const [index, setIndex] = useState(0)
+  const [fading, setFading] = useState(false)
+
+  const safeIdx = slides.length ? index % slides.length : 0
+
+  // Auto-advance every 5 s
+  useEffect(() => {
+    if (slides.length <= 1) return
+    const t = setInterval(() => {
+      setFading(true)
+      setTimeout(() => { setIndex(i => (i + 1) % slides.length); setFading(false) }, 280)
+    }, 5000)
+    return () => clearInterval(t)
+  }, [slides.length])
+
+  function go(dir: number) {
+    if (fading || slides.length < 2) return
+    setFading(true)
+    setTimeout(() => { setIndex(i => (i + dir + slides.length) % slides.length); setFading(false) }, 280)
+  }
+
+  function goTo(i: number) {
+    if (i === safeIdx || fading) return
+    setFading(true)
+    setTimeout(() => { setIndex(i); setFading(false) }, 280)
+  }
+
+  if (!slides.length) return null
+
+  const course = slides[safeIdx]
+  const grad = CARD_GRADIENTS[allCourses.indexOf(course) % CARD_GRADIENTS.length]
+  const status = statusByCourse[course.id] || 'not_started'
+  const cta = status === 'in_progress' ? 'Continue →' : status === 'completed' ? 'Review →' : 'Start course →'
+
+  return (
+    <div className="gbch-slider" style={{ position:'relative', overflow:'hidden', marginBottom:'28px', background:grad }}>
+
+      {/* Decorative orbs */}
+      <div style={{ position:'absolute', right:'-60px', top:'-60px', width:'280px', height:'280px', borderRadius:'50%', background:'rgba(255,255,255,0.08)', pointerEvents:'none' }} />
+      <div style={{ position:'absolute', right:'90px', bottom:'-80px', width:'220px', height:'220px', borderRadius:'50%', background:'rgba(255,255,255,0.05)', pointerEvents:'none' }} />
+      <div style={{ position:'absolute', right:'230px', top:'0px', width:'110px', height:'110px', borderRadius:'50%', background:'rgba(255,255,255,0.06)', pointerEvents:'none' }} />
+
+      {/* Large background icon */}
+      <div style={{ position:'absolute', right:'28px', top:'50%', transform:'translateY(-50%)', fontSize:'120px', lineHeight:1, opacity:0.14, pointerEvents:'none', userSelect:'none' }}>
+        {course.icon}
+      </div>
+
+      {/* Content — fades between slides */}
+      <div className="gbch-slider-pad" style={{
+        position:'relative', zIndex:1, height:'100%', display:'flex',
+        flexDirection:'column', justifyContent:'center', boxSizing:'border-box',
+        opacity: fading ? 0 : 1, transition:'opacity 0.28s ease',
+      }}>
+        {/* Badges */}
+        <div style={{ display:'flex', gap:'7px', marginBottom:'11px', flexWrap:'wrap' }}>
+          <span style={{ padding:'3px 11px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(0,0,0,0.22)', color:'rgba(255,255,255,0.92)' }}>
+            {course.type === 'mandatory' ? '⚡ Mandatory' : '✦ Optional'}
+          </span>
+          {status === 'in_progress' && <span style={{ padding:'3px 11px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(255,255,255,0.2)', color:'#fff' }}>● In progress</span>}
+          {status === 'completed'   && <span style={{ padding:'3px 11px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(255,255,255,0.25)', color:'#fff' }}>✓ Completed</span>}
+          {status === 'not_started' && <span style={{ padding:'3px 11px', borderRadius:'20px', fontSize:'10px', fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase', background:'rgba(0,0,0,0.18)', color:'rgba(255,255,255,0.8)' }}>New</span>}
+        </div>
+
+        {/* Title */}
+        <div className="gbch-slider-title" style={{ fontWeight:800, color:'#fff', lineHeight:1.2, marginBottom:'8px', textShadow:'0 2px 12px rgba(0,0,0,0.18)' }}>
+          {course.title}
+        </div>
+
+        {/* Description — hidden on mobile via CSS */}
+        <div className="gbch-slider-desc" style={{ fontSize:'13px', color:'rgba(255,255,255,0.78)', lineHeight:1.55, marginBottom:'18px', maxWidth:'440px' }}>
+          {course.description}
+        </div>
+
+        {/* CTA */}
+        <div>
+          <Link href={`/courses/${course.id}`} style={{
+            display:'inline-flex', alignItems:'center', gap:'6px',
+            padding:'10px 22px', background:'rgba(255,255,255,0.95)',
+            borderRadius:'10px', fontSize:'13px', fontWeight:700,
+            textDecoration:'none', color:'#1A1A18',
+            boxShadow:'0 4px 18px rgba(0,0,0,0.2)',
+          }}>
+            {cta}
+          </Link>
+        </div>
+      </div>
+
+      {/* ← arrow */}
+      {slides.length > 1 && (
+        <button type="button" onClick={() => go(-1)} aria-label="Previous slide"
+          style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', zIndex:2, width:'34px', height:'34px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', border:'1.5px solid rgba(255,255,255,0.3)', color:'#fff', fontSize:'22px', lineHeight:1, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          ‹
+        </button>
+      )}
+
+      {/* → arrow */}
+      {slides.length > 1 && (
+        <button type="button" onClick={() => go(1)} aria-label="Next slide"
+          style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', zIndex:2, width:'34px', height:'34px', borderRadius:'50%', background:'rgba(255,255,255,0.18)', border:'1.5px solid rgba(255,255,255,0.3)', color:'#fff', fontSize:'22px', lineHeight:1, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          ›
+        </button>
+      )}
+
+      {/* Dot indicators */}
+      {slides.length > 1 && (
+        <div style={{ position:'absolute', bottom:'13px', left:'50%', transform:'translateX(-50%)', display:'flex', gap:'6px', zIndex:2 }}>
+          {slides.map((_, i) => (
+            <button key={i} type="button" onClick={() => goTo(i)} aria-label={`Go to slide ${i + 1}`}
+              style={{ width: i === safeIdx ? '22px' : '7px', height:'7px', borderRadius:'4px', border:'none', padding:0, cursor:'pointer', background: i === safeIdx ? '#fff' : 'rgba(255,255,255,0.38)', transition:'all 0.3s ease' }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
