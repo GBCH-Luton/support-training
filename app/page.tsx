@@ -19,6 +19,7 @@ const GRADIENTS: Record<string, string> = {
   pink: 'linear-gradient(135deg,#E87BA5,#99355A)',
 }
 const CARD_GRADIENTS = [GRADIENTS.coral, GRADIENTS.blue, GRADIENTS.purple, GRADIENTS.teal, GRADIENTS.amber, GRADIENTS.pink]
+const CARD_SOLIDS = ['#D4472A', '#1E3FB8', '#4A3FB0', '#0F6E56', '#BA7517', '#99355A']
 
 export default function Home() {
   const router = useRouter()
@@ -183,21 +184,32 @@ export default function Home() {
           <div className="gbch-grid">
             {visibleCourses.map((course, i) => {
               const status = statusByCourse[course.id] || 'not_started'
-              const grad = CARD_GRADIENTS[i % CARD_GRADIENTS.length]
+              const solid = CARD_SOLIDS[i % CARD_SOLIDS.length]
+              const statusLabel = status === 'completed' ? 'Completed' : status === 'in_progress' ? 'In progress' : 'Not started'
+              const ctaLabel   = status === 'completed' ? 'Review →'  : status === 'in_progress' ? 'Continue →' : 'Start →'
               return (
                 <Link key={course.id} href={`/courses/${course.id}`}
-                  style={{ background: '#FFFFFF', borderRadius: '0', padding: '20px', boxShadow: '0 3px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.05)', textDecoration: 'none', color: 'inherit', display: 'block', transition: 'transform .15s' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
-                    <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>{course.icon}</div>
-                    <StatusBadge status={status} />
+                  style={{ background:'#FFFFFF', borderRadius:'0', overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.07)', border:'1px solid rgba(0,0,0,0.06)', textDecoration:'none', color:'inherit', display:'flex', flexDirection:'column' }}>
+                  {/* Solid colour top */}
+                  <div style={{ background:solid, padding:'26px 20px 20px', display:'flex', flexDirection:'column', alignItems:'center', gap:'10px' }}>
+                    <div style={{ width:'56px', height:'56px', borderRadius:'16px', background:'rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'28px' }}>
+                      {course.icon}
+                    </div>
+                    <span style={{ fontSize:'12px', fontWeight:400, color:'rgba(255,255,255,0.85)', letterSpacing:'0.03em' }}>{statusLabel}</span>
                   </div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>{course.title}</div>
-                  <div style={{ fontSize: '13px', color: '#5A5A55', lineHeight: '1.55', marginBottom: '14px' }}>{course.description}</div>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <span style={{ background: course.type === 'mandatory' ? 'rgba(153,60,29,0.1)' : 'rgba(45,91,227,0.1)', color: course.type === 'mandatory' ? '#993C1D' : '#2D5BE3', padding: '4px 11px', borderRadius: '20px', fontSize: '11px', fontWeight: 600 }}>
-                      {course.type === 'mandatory' ? 'Mandatory' : 'Optional'}
-                    </span>
-                    <span style={{ fontSize: '12px', color: '#8A8A82' }}>Pass {course.pass_mark}%</span>
+                  {/* White content */}
+                  <div style={{ padding:'16px 18px 18px', flex:1, display:'flex', flexDirection:'column' }}>
+                    <div style={{ fontSize:'15px', fontWeight:700, marginBottom:'6px', lineHeight:1.3, color:'#1A1A18' }}>{course.title}</div>
+                    <div style={{ fontSize:'12px', color:'#5A5A55', lineHeight:1.6, marginBottom:'14px', flex:1 }}>{course.description}</div>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                      <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
+                        <span style={{ fontSize:'10px', fontWeight:700, background:course.type==='mandatory'?'rgba(153,60,29,0.1)':'rgba(45,91,227,0.1)', color:course.type==='mandatory'?'#993C1D':'#2D5BE3', padding:'3px 9px', borderRadius:'20px', textTransform:'uppercase', letterSpacing:'0.04em' }}>
+                          {course.type === 'mandatory' ? 'Mandatory' : 'Optional'}
+                        </span>
+                        <span style={{ fontSize:'11px', color:'#8A8A82' }}>Pass {course.pass_mark}%</span>
+                      </div>
+                      <span style={{ fontSize:'12px', fontWeight:600, color:solid }}>{ctaLabel}</span>
+                    </div>
                   </div>
                 </Link>
               )
@@ -209,23 +221,6 @@ export default function Home() {
   )
 }
 
-function StatusBadge({ status }: { status: 'completed' | 'in_progress' | 'not_started' }) {
-  if (status === 'completed') return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(15,110,86,0.1)', color: '#0F6E56', padding: '5px 11px', borderRadius: '20px', fontSize: '11px', fontWeight: 600 }}>
-      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#0F6E56' }} /> Completed
-    </span>
-  )
-  if (status === 'in_progress') return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(133,79,11,0.1)', color: '#854F0B', padding: '5px 11px', borderRadius: '20px', fontSize: '11px', fontWeight: 600 }}>
-      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#854F0B' }} /> In progress
-    </span>
-  )
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(0,0,0,0.05)', color: '#8A8A82', padding: '5px 11px', borderRadius: '20px', fontSize: '11px', fontWeight: 600 }}>
-      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#C4C4BE' }} /> Not started
-    </span>
-  )
-}
 
 function pillStyle(active: boolean): React.CSSProperties {
   return { padding: '7px 15px', borderRadius: '20px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', border: active ? '1px solid #2D5BE3' : '1px solid rgba(0,0,0,0.12)', background: active ? '#2D5BE3' : '#FFFFFF', color: active ? '#fff' : '#5A5A55' }
