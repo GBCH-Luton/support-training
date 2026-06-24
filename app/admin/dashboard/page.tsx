@@ -39,20 +39,21 @@ export default function AdminDashboard() {
   ]
 
   const quickLinks = [
-    { href: '/admin/builder', label: 'Build a new course', icon: '✏️' },
-    { href: '/admin/courses', label: 'Manage courses', icon: '📚' },
-    { href: '/admin/staff', label: 'Manage staff', icon: '👥' },
-    { href: '/admin/enrolments', label: 'Assign courses', icon: '🎯' },
+    { href: '/admin/builder',    label: 'Build a new course', icon: '✏️' },
+    { href: '/admin/courses',    label: 'Manage courses',     icon: '📚' },
+    { href: '/admin/staff',      label: 'Manage staff',       icon: '👥' },
+    { href: '/admin/enrolments', label: 'Assign courses',     icon: '🎯' },
+    { href: '/admin/reports',    label: 'View reports',       icon: '📈' },
   ]
 
   return (
     <div>
       <style>{`
         .dash-tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:28px; }
-        .dash-links { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+        .dash-links { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
         @media (max-width:820px) {
           .dash-tiles { grid-template-columns:repeat(2,1fr); }
-          .dash-links { grid-template-columns:1fr 1fr; }
+          .dash-links { grid-template-columns:1fr 1fr 1fr; }
         }
         @media (max-width:480px) {
           .dash-tiles { grid-template-columns:1fr; }

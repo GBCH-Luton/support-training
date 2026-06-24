@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useUser } from '@/lib/useUser'
 import Link from 'next/link'
+import InstallPrompt from './components/InstallPrompt'
 
 type Course = { id: string; title: string; description: string; type: string; pass_mark: number; icon: string; category_id: string }
 type Category = { id: string; name: string; icon: string }
@@ -94,6 +95,7 @@ export default function Home() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18' }}>
+      <InstallPrompt />
       <style>{`
         .gbch-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; }
         .gbch-wrap { padding:24px 5%; max-width:1400px; margin:0 auto; }
