@@ -132,7 +132,7 @@ export default function Home() {
           </button>
 
           <div className="gbch-actions">
-            {user.role === 'admin' && (
+            {(user.role === 'admin' || user.role === 'training_admin') && (
               <Link href="/admin/dashboard" style={{ padding: '8px 14px', background: 'rgba(133,79,11,0.1)', color: '#854F0B', borderRadius: '9px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>
                 ⚙️ Admin panel
               </Link>

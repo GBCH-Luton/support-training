@@ -3,10 +3,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-type Staff       = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; must_reset_password: boolean }
-type Department  = { id: string; name: string; icon: string }
-type Role        = { id: string; name: string; label: string; color: string; bg_color: string; sort_order: number; is_admin: boolean }
-type SortKey     = 'name' | 'email' | 'job_title' | 'role' | 'active'
+type Staff      = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; must_reset_password: boolean }
+type Department = { id: string; name: string; icon: string }
+type Role       = { id: string; name: string; label: string; color: string; bg_color: string; sort_order: number; is_admin: boolean }
+type SortKey    = 'name' | 'email' | 'job_title' | 'role' | 'active'
 
 function hexToRgba(hex: string, alpha: number) {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -18,10 +18,32 @@ function hexToRgba(hex: string, alpha: number) {
 const PRESET_COLORS = ['#2D5BE3','#534AB7','#854F0B','#0F6E56','#993C1D','#0E7490','#99355A','#5A5A55']
 
 const FALLBACK_ROLES: Role[] = [
-  { id:'1', name:'sw',      label:'Support Worker', color:'#2D5BE3', bg_color:'rgba(45,91,227,0.1)',  sort_order:1, is_admin:false },
-  { id:'2', name:'manager', label:'Manager',        color:'#534AB7', bg_color:'rgba(83,74,183,0.1)',  sort_order:2, is_admin:false },
-  { id:'3', name:'admin',   label:'Admin',          color:'#854F0B', bg_color:'rgba(133,79,11,0.1)',  sort_order:3, is_admin:true  },
+  { id:'1', name:'sw',             label:'Support Worker',  color:'#2D5BE3', bg_color:'rgba(45,91,227,0.1)',  sort_order:1, is_admin:false },
+  { id:'2', name:'manager',        label:'Manager',         color:'#534AB7', bg_color:'rgba(83,74,183,0.1)',  sort_order:2, is_admin:false },
+  { id:'3', name:'admin',          label:'Admin',           color:'#854F0B', bg_color:'rgba(133,79,11,0.1)',  sort_order:3, is_admin:true  },
+  { id:'4', name:'training_admin', label:'Training Admin',  color:'#E86C3A', bg_color:'rgba(232,108,58,0.1)',sort_order:4, is_admin:true  },
 ]
+
+function ColorPicker({ value, previewLabel, onChange }: { value: string; previewLabel: string; onChange: (hex: string) => void }) {
+  return (
+    <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center', marginTop:'4px', marginBottom:'14px' }}>
+      {PRESET_COLORS.map(c => (
+        <button key={c} type="button" onClick={() => onChange(c)}
+          style={{ width:'26px', height:'26px', borderRadius:'50%', background:c, border: value===c ? '3px solid #1A1A18' : '3px solid transparent', cursor:'pointer', outline:'none', flexShrink:0 }} />
+      ))}
+      <input
+        type="color" value={value} onChange={e => onChange(e.target.value)}
+        title="Pick a custom colour"
+        style={{ width:'26px', height:'26px', padding:'1px', cursor:'pointer', borderRadius:'6px', border: !PRESET_COLORS.includes(value) ? '2px solid #1A1A18' : '2px solid rgba(0,0,0,0.18)', flexShrink:0 }}
+      />
+      {previewLabel && (
+        <span style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:700, background:hexToRgba(value,0.12), color:value, border:`1.5px solid ${value}` }}>
+          {previewLabel}
+        </span>
+      )}
+    </div>
+  )
+}
 
 export default function AdminStaff() {
   const [staff, setStaff]             = useState<Staff[]>([])
@@ -31,14 +53,12 @@ export default function AdminStaff() {
   const [loading, setLoading]         = useState(true)
   const [saving, setSaving]           = useState(false)
 
-  // Table controls
-  const [search, setSearch]         = useState('')
-  const [filterRole, setFilterRole] = useState('')
-  const [sortKey, setSortKey]       = useState<SortKey>('name')
-  const [sortDir, setSortDir]       = useState<'asc'|'desc'>('asc')
+  const [search, setSearch]           = useState('')
+  const [filterRole, setFilterRole]   = useState('')
+  const [sortKey, setSortKey]         = useState<SortKey>('name')
+  const [sortDir, setSortDir]         = useState<'asc'|'desc'>('asc')
   const [openDeptMenu, setOpenDeptMenu] = useState<string|null>(null)
 
-  // Role panel
   const [showRoles, setShowRoles]       = useState(false)
   const [editingRole, setEditingRole]   = useState<Role|null>(null)
   const [roleFormLabel, setRoleFormLabel] = useState('')
@@ -46,7 +66,6 @@ export default function AdminStaff() {
   const [roleFormColor, setRoleFormColor] = useState('#2D5BE3')
   const [rolesSaving, setRolesSaving]   = useState(false)
 
-  // Add staff form
   const [showAdd, setShowAdd]         = useState(false)
   const [newName, setNewName]         = useState('')
   const [newEmail, setNewEmail]       = useState('')
@@ -77,7 +96,7 @@ export default function AdminStaff() {
   const effectiveRoles = roles.length > 0 ? roles : FALLBACK_ROLES
   const roleStyle = (name: string) => effectiveRoles.find(r => r.name === name) ?? { color:'#5A5A55', bg_color:'rgba(90,90,85,0.1)', label: name }
 
-  // ── Staff actions ────────────────────────────────────────────────────────────
+  // ── Staff ────────────────────────────────────────────────────────────────────
   async function addStaff() {
     if (!newName.trim() || !newEmail.trim()) { alert('Name and email are required'); return }
     setSaving(true)
@@ -113,24 +132,21 @@ export default function AdminStaff() {
     }
   }
 
-  // ── Role actions ─────────────────────────────────────────────────────────────
-  function openEditRole(r: Role) {
-    setEditingRole(r); setRoleFormLabel(r.label); setRoleFormName(r.name); setRoleFormColor(r.color)
-  }
-  function clearRoleForm() {
-    setEditingRole(null); setRoleFormLabel(''); setRoleFormName(''); setRoleFormColor('#2D5BE3')
-  }
+  // ── Roles ────────────────────────────────────────────────────────────────────
+  function openEditRole(r: Role) { setEditingRole(r); setRoleFormLabel(r.label); setRoleFormName(r.name); setRoleFormColor(r.color) }
+  function clearRoleForm() { setEditingRole(null); setRoleFormLabel(''); setRoleFormName(''); setRoleFormColor('#2D5BE3') }
+  function closeRolesPanel() { setShowRoles(false); clearRoleForm() }
 
   async function saveRole() {
     if (!roleFormLabel.trim()) { alert('Display name is required'); return }
     setRolesSaving(true)
     const bg = hexToRgba(roleFormColor, 0.12)
     if (editingRole) {
-      await supabase.from('roles').update({ label: roleFormLabel, color: roleFormColor, bg_color: bg }).eq('id', editingRole.id)
-      setRoles(p => p.map(r => r.id === editingRole.id ? { ...r, label: roleFormLabel, color: roleFormColor, bg_color: bg } : r))
+      await supabase.from('roles').update({ label:roleFormLabel, color:roleFormColor, bg_color:bg }).eq('id', editingRole.id)
+      setRoles(p => p.map(r => r.id === editingRole.id ? { ...r, label:roleFormLabel, color:roleFormColor, bg_color:bg } : r))
     } else {
       if (!roleFormName.trim()) { alert('Role key is required'); setRolesSaving(false); return }
-      const { error } = await supabase.from('roles').insert({ name: roleFormName, label: roleFormLabel, color: roleFormColor, bg_color: bg })
+      const { error } = await supabase.from('roles').insert({ name:roleFormName, label:roleFormLabel, color:roleFormColor, bg_color:bg })
       if (error) { alert(error.message); setRolesSaving(false); return }
       await fetchAll()
     }
@@ -138,13 +154,13 @@ export default function AdminStaff() {
   }
 
   async function deleteRole(r: Role) {
-    if (['sw','manager','admin'].includes(r.name)) { alert('System roles cannot be deleted.'); return }
+    if (['sw','manager','admin','training_admin'].includes(r.name)) { alert('System roles cannot be deleted.'); return }
     if (!confirm(`Delete role "${r.label}"?`)) return
     await supabase.from('roles').delete().eq('id', r.id)
     setRoles(p => p.filter(x => x.id !== r.id))
   }
 
-  // ── Filter / sort ─────────────────────────────────────────────────────────────
+  // ── Sort / filter ─────────────────────────────────────────────────────────────
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
     else { setSortKey(key); setSortDir('asc') }
@@ -158,30 +174,11 @@ export default function AdminStaff() {
     ) : [...staff]
     if (filterRole) list = list.filter(s => s.role === filterRole)
     return list.sort((a, b) => {
-      const av = sortKey === 'active' ? String(a.active) : (a[sortKey]||'')
-      const bv = sortKey === 'active' ? String(b.active) : (b[sortKey]||'')
+      const av = sortKey === 'active' ? String(a.active) : (a[sortKey as keyof Staff] as string || '')
+      const bv = sortKey === 'active' ? String(b.active) : (b[sortKey as keyof Staff] as string || '')
       return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
     })
   }, [staff, search, filterRole, sortKey, sortDir])
-
-  // ── Colour picker helper ──────────────────────────────────────────────────────
-  function ColorPicker({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
-    return (
-      <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center', marginTop:'4px', marginBottom:'12px' }}>
-        {PRESET_COLORS.map(c => (
-          <button key={c} type="button" onClick={() => onChange(c)}
-            style={{ width:'26px', height:'26px', borderRadius:'50%', background:c, border: value===c ? '3px solid #1A1A18' : '3px solid transparent', cursor:'pointer', outline:'none', flexShrink:0 }} />
-        ))}
-        <label title="Custom colour" style={{ position:'relative', width:'26px', height:'26px', borderRadius:'50%', cursor:'pointer', border: PRESET_COLORS.includes(value) ? '3px solid transparent' : '3px solid #1A1A18', overflow:'hidden', flexShrink:0, background:'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)', display:'flex' }}>
-          <input type="color" value={value} onChange={e => onChange(e.target.value)}
-            style={{ opacity:0, position:'absolute', inset:0, width:'100%', height:'100%', cursor:'pointer', border:'none' }} />
-        </label>
-        <span style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:700, background:hexToRgba(value,0.12), color:value, border:`1.5px solid ${value}` }}>
-          {roleFormLabel || 'Preview'}
-        </span>
-      </div>
-    )
-  }
 
   return (
     <div>
@@ -206,15 +203,23 @@ export default function AdminStaff() {
       {/* ── Manage roles panel ── */}
       {showRoles && (
         <div style={card}>
+          {/* Panel header with close */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px', paddingBottom:'10px', borderBottom:'1px solid rgba(0,0,0,0.06)' }}>
+            <span style={{ fontSize:'14px', fontWeight:700, color:'#1A1A18' }}>Manage roles</span>
+            <button type="button" onClick={closeRolesPanel}
+              style={{ padding:'4px 12px', fontSize:'12px', fontWeight:600, border:'1px solid rgba(0,0,0,0.14)', borderRadius:'8px', background:'#F4F3EF', color:'#5A5A55', cursor:'pointer' }}>
+              ✕ Close
+            </button>
+          </div>
+
           {/* Existing roles */}
-          <div style={cardTitle}>Existing roles</div>
           <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'20px' }}>
             {effectiveRoles.map(r => (
               <div key={r.id} style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'5px 10px', borderRadius:'20px', background:r.bg_color, border:`1.5px solid ${r.color}` }}>
                 <span style={{ fontSize:'12px', fontWeight:700, color:r.color }}>{r.label}</span>
-                <button type="button" onClick={() => { openEditRole(r) }} title="Edit"
-                  style={{ background:'none', border:'none', cursor:'pointer', color:r.color, fontSize:'12px', lineHeight:1, padding:0, opacity:0.8 }}>✏️</button>
-                {!['sw','manager','admin'].includes(r.name) && (
+                <button type="button" onClick={() => openEditRole(r)} title="Edit"
+                  style={{ background:'none', border:'none', cursor:'pointer', color:r.color, fontSize:'12px', lineHeight:1, padding:0 }}>✏️</button>
+                {!['sw','manager','admin','training_admin'].includes(r.name) && (
                   <button type="button" onClick={() => deleteRole(r)} title="Delete"
                     style={{ background:'none', border:'none', cursor:'pointer', color:r.color, fontSize:'14px', lineHeight:1, padding:0, opacity:0.7 }}>×</button>
                 )}
@@ -223,7 +228,9 @@ export default function AdminStaff() {
           </div>
 
           {/* Add / Edit form */}
-          <div style={cardTitle}>{editingRole ? `Edit "${editingRole.label}"` : 'Add new role'}</div>
+          <div style={{ fontSize:'14px', fontWeight:700, color:'#1A1A18', marginBottom:'14px', paddingBottom:'10px', borderBottom:'1px solid rgba(0,0,0,0.06)' }}>
+            {editingRole ? `Edit "${editingRole.label}"` : 'Add new role'}
+          </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px' }}>
             <div>
               <label style={label}>Display name *</label>
@@ -231,15 +238,15 @@ export default function AdminStaff() {
             </div>
             <div>
               <label style={label}>Key {editingRole ? '(cannot change)' : '(no spaces) *'}</label>
-              <input style={{ ...input, opacity: editingRole ? 0.45 : 1 }}
+              <input style={{ ...input, opacity:editingRole ? 0.45 : 1 }}
                 value={roleFormName}
                 onChange={e => !editingRole && setRoleFormName(e.target.value.toLowerCase().replace(/\s+/g,'_'))}
                 disabled={!!editingRole}
                 placeholder="e.g. housing_officer" />
             </div>
           </div>
-          <label style={label}>Colour</label>
-          <ColorPicker value={roleFormColor} onChange={setRoleFormColor} />
+          <label style={label}>Colour — pick a preset or click the last swatch for any colour</label>
+          <ColorPicker value={roleFormColor} previewLabel={roleFormLabel} onChange={setRoleFormColor} />
           <div style={{ display:'flex', gap:'8px' }}>
             <button type="button" onClick={saveRole} disabled={rolesSaving}
               style={{ padding:'9px 20px', background:'#2D5BE3', color:'#fff', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>
@@ -248,7 +255,7 @@ export default function AdminStaff() {
             {editingRole && (
               <button type="button" onClick={clearRoleForm}
                 style={{ padding:'9px 16px', background:'#F4F3EF', color:'#5A5A55', border:'1px solid rgba(0,0,0,0.12)', borderRadius:'8px', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>
-                Cancel
+                Cancel edit
               </button>
             )}
           </div>
@@ -295,17 +302,13 @@ export default function AdminStaff() {
           <input style={{ ...input, paddingLeft:'34px' }} placeholder="Search name, email or job title…" value={search} onChange={e=>setSearch(e.target.value)} />
           <span style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', pointerEvents:'none' }}>🔍</span>
         </div>
-        <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', alignItems:'center' }}>
-          <button type="button" onClick={()=>setFilterRole('')}
-            style={{ padding:'5px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:600, cursor:'pointer', border:filterRole===''?'1.5px solid #1A1A18':'1.5px solid rgba(0,0,0,0.14)', background:filterRole===''?'#1A1A18':'#fff', color:filterRole===''?'#fff':'#5A5A55' }}>
-            All roles
-          </button>
-          {effectiveRoles.map(r=>(
-            <button key={r.name} type="button" onClick={()=>setFilterRole(p=>p===r.name?'':r.name)}
-              style={{ padding:'5px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:600, cursor:'pointer', border:`1.5px solid ${filterRole===r.name?r.color:'rgba(0,0,0,0.14)'}`, background:filterRole===r.name?r.bg_color:'#fff', color:filterRole===r.name?r.color:'#5A5A55' }}>
-              {r.label}
-            </button>
-          ))}
+        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+          <span style={{ fontSize:'12px', color:'#8A8A82', whiteSpace:'nowrap' }}>Filter by role:</span>
+          <select value={filterRole} onChange={e=>setFilterRole(e.target.value)}
+            style={{ ...input, width:'auto', minWidth:'160px', paddingRight:'28px' }}>
+            <option value="">All roles</option>
+            {effectiveRoles.map(r=><option key={r.name} value={r.name}>{r.label}</option>)}
+          </select>
         </div>
       </div>
 
@@ -390,9 +393,9 @@ export default function AdminStaff() {
   )
 }
 
-const card: React.CSSProperties     = { background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:'12px', padding:'20px', marginBottom:'16px' }
+const card: React.CSSProperties      = { background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:'12px', padding:'20px', marginBottom:'16px' }
 const cardTitle: React.CSSProperties = { fontSize:'14px', fontWeight:700, color:'#1A1A18', marginBottom:'14px', paddingBottom:'10px', borderBottom:'1px solid rgba(0,0,0,0.06)' }
-const label: React.CSSProperties    = { display:'block', fontSize:'11px', fontWeight:600, color:'#5A5A55', textTransform:'uppercase', letterSpacing:'0.04em', marginBottom:'5px' }
-const input: React.CSSProperties    = { padding:'8px 11px', border:'1px solid rgba(0,0,0,0.14)', borderRadius:'8px', background:'#F8F7F4', color:'#1A1A18', fontSize:'13px', outline:'none', width:'100%', boxSizing:'border-box' }
-const th: React.CSSProperties       = { textAlign:'left', padding:'10px 16px', fontSize:'11px', fontWeight:700, color:'#8A8A82', textTransform:'uppercase', letterSpacing:'0.05em' }
-const td: React.CSSProperties       = { padding:'12px 16px', verticalAlign:'top', color:'#1A1A18' }
+const label: React.CSSProperties     = { display:'block', fontSize:'11px', fontWeight:600, color:'#5A5A55', textTransform:'uppercase', letterSpacing:'0.04em', marginBottom:'5px' }
+const input: React.CSSProperties     = { padding:'8px 11px', border:'1px solid rgba(0,0,0,0.14)', borderRadius:'8px', background:'#F8F7F4', color:'#1A1A18', fontSize:'13px', outline:'none', width:'100%', boxSizing:'border-box' }
+const th: React.CSSProperties        = { textAlign:'left', padding:'10px 16px', fontSize:'11px', fontWeight:700, color:'#8A8A82', textTransform:'uppercase', letterSpacing:'0.05em' }
+const td: React.CSSProperties        = { padding:'12px 16px', verticalAlign:'top', color:'#1A1A18' }

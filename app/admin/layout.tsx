@@ -24,13 +24,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!loading && !user) router.push('/login')
     if (!loading && user && user.must_reset_password) router.push('/reset-password')
-    if (!loading && user && user.role !== 'admin') router.push('/')
+    if (!loading && user && user.role !== 'admin' && user.role !== 'training_admin') router.push('/')
   }, [user, loading, router])
 
   useEffect(() => { setMenuOpen(false) }, [pathname])
 
   if (loading) return <div style={{ padding: '40px', fontFamily: 'system-ui, sans-serif' }}>Loading...</div>
-  if (!user || user.role !== 'admin') return null
+  if (!user || (user.role !== 'admin' && user.role !== 'training_admin')) return null
 
   const navLinks = (
     <>
