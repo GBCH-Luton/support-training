@@ -10,15 +10,6 @@ import Link from 'next/link'
 type Course = { id: string; title: string; description: string; type: string; pass_mark: number; icon: string; category_id: string }
 type Category = { id: string; name: string; icon: string }
 
-const GRADIENTS: Record<string, string> = {
-  coral: 'linear-gradient(135deg,#FF8A5B,#E5482C)',
-  blue: 'linear-gradient(135deg,#6FA0F5,#1E3FB8)',
-  purple: 'linear-gradient(135deg,#8F86E0,#4A3FB0)',
-  teal: 'linear-gradient(135deg,#3FC9A0,#0F6E56)',
-  amber: 'linear-gradient(135deg,#F5B948,#BA7517)',
-  pink: 'linear-gradient(135deg,#E87BA5,#99355A)',
-}
-const CARD_GRADIENTS = [GRADIENTS.coral, GRADIENTS.blue, GRADIENTS.purple, GRADIENTS.teal, GRADIENTS.amber, GRADIENTS.pink]
 const CARD_SOLIDS = ['#D4472A', '#1E3FB8', '#4A3FB0', '#0F6E56', '#BA7517', '#99355A']
 
 export default function Home() {
@@ -111,7 +102,7 @@ export default function Home() {
         .gbch-menu-btn { display:none; }
         .gbch-slider { }
         .gbch-slider-pad { padding:32px 80px 44px; }
-        .gbch-slider-title { font-size:22px; }
+        .gbch-slider-title { font-size:22px; font-weight:500; }
         .gbch-slider-desc { }
         @media (max-width: 640px) {
           .gbch-grid { grid-template-columns:1fr; }
@@ -286,7 +277,7 @@ function HeroSlider({ courses, statusByCourse, allCourses }: {
         </div>
 
         {/* Course title */}
-        <div className="gbch-slider-title" style={{ fontWeight:800, color:'#fff', lineHeight:1.2, marginBottom:'10px' }}>
+        <div className="gbch-slider-title" style={{ color:'#fff', lineHeight:1.2, marginBottom:'10px' }}>
           {course.title}
         </div>
 
