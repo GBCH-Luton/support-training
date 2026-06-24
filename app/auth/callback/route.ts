@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -7,11 +6,11 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/'
 
   if (code) {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    await supabase.auth.exchangeCodeForSession(code)
+    // Forward the code to the client page so the browser can exchange it
+    // and persist the session in localStorage. Server-side exchange here
+    // would silently succeed but never reach the browser's storage.
+    const sep = next.includes('?') ? '&' : '?'
+    return NextResponse.redirect(`${origin}${next}${sep}code=${code}`)
   }
 
   return NextResponse.redirect(`${origin}${next}`)
