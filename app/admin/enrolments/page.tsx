@@ -31,6 +31,8 @@ export default function AdminEnrolments() {
 
   // Table controls
   const [search, setSearch] = useState('')
+  const [filterCourse, setFilterCourse] = useState('')
+  const [filterKind, setFilterKind] = useState<'all' | 'individual' | 'department'>('all')
   const [sortKey, setSortKey] = useState<SortKey>('enrolled')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
@@ -130,8 +132,10 @@ export default function AdminEnrolments() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
-    const searched = q ? rows.filter((r) => r.name.toLowerCase().includes(q) || r.course.toLowerCase().includes(q)) : rows
-    return [...searched].sort((a, b) => {
+    let list = q ? rows.filter((r) => r.name.toLowerCase().includes(q) || r.course.toLowerCase().includes(q)) : [...rows]
+    if (filterCourse) list = list.filter((r) => r.course === getCourse(filterCourse)?.title)
+    if (filterKind !== 'all') list = list.filter((r) => r.kind === filterKind)
+    return list.sort((a, b) => {
       let av = '', bv = ''
       if (sortKey === 'name') { av = a.name; bv = b.name }
       else if (sortKey === 'course') { av = a.course; bv = b.course }
@@ -141,7 +145,7 @@ export default function AdminEnrolments() {
       const cmp = av.localeCompare(bv)
       return sortDir === 'asc' ? cmp : -cmp
     })
-  }, [rows, search, sortKey, sortDir])
+  }, [rows, search, filterCourse, filterKind, courses, sortKey, sortDir])
 
   const sortIcon = (key: SortKey) => sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ' ↕'
   const assignLabel = assignMode === 'individual'
@@ -260,15 +264,31 @@ export default function AdminEnrolments() {
         </div>
       )}
 
-      {/* Search */}
-      <div style={{ position: 'relative', marginBottom: '16px', maxWidth: '320px' }}>
-        <input
-          style={{ ...input, paddingLeft: '34px' }}
-          placeholder="Search by name or course…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', pointerEvents: 'none' }}>🔍</span>
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ position: 'relative', flex: '0 0 240px' }}>
+          <input style={{ ...input, paddingLeft: '34px' }} placeholder="Search by name or course…"
+            value={search} onChange={(e) => setSearch(e.target.value)} />
+          <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', pointerEvents: 'none' }}>🔍</span>
+        </div>
+        <select style={{ ...input, width: 'auto', minWidth: '180px' }} value={filterCourse} onChange={(e) => setFilterCourse(e.target.value)}>
+          <option value="">All courses</option>
+          {courses.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.title}</option>)}
+        </select>
+        <div style={{ display: 'flex', background: '#F4F3EF', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '8px', padding: '3px', gap: '2px' }}>
+          {([['all', 'All'], ['individual', '👤 Individual'], ['department', '🏢 Department']] as const).map(([val, lbl]) => (
+            <button key={val} type="button" onClick={() => setFilterKind(val)}
+              style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 600, borderRadius: '6px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', background: filterKind === val ? '#FFFFFF' : 'transparent', color: filterKind === val ? '#1A1A18' : '#8A8A82', boxShadow: filterKind === val ? '0 1px 4px rgba(0,0,0,0.12)' : 'none' }}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+        {(search || filterCourse || filterKind !== 'all') && (
+          <button type="button" onClick={() => { setSearch(''); setFilterCourse(''); setFilterKind('all') }}
+            style={{ fontSize: '12px', color: '#993C1D', background: 'rgba(153,60,29,0.07)', border: '1px solid rgba(153,60,29,0.2)', borderRadius: '8px', padding: '7px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            ✕ Clear filters
+          </button>
+        )}
       </div>
 
       {/* Table */}
