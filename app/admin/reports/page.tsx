@@ -41,6 +41,7 @@ export default function AdminReports() {
   const [progress, setProgress] = useState<SectProg[]>([])
   const [loading, setLoading]   = useState(true)
 
+  const [selectedId, setSelectedId]   = useState('')
   const [search, setSearch]           = useState('')
   const [filterCourse, setFilterCourse] = useState('')
   const [filterStatus, setFilterStatus] = useState<'' | Status>('')
@@ -200,15 +201,18 @@ export default function AdminReports() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row, i) => {
+              {filtered.map((row) => {
                 const st = STATUS_META[row.status]
                 const overdue = row.dueDate && new Date(row.dueDate) < new Date() && row.status !== 'passed'
                 const scoreColor = row.bestScore === null ? '#8A8A82'
                   : row.bestScore >= 80 ? '#0F6E56'
                   : row.bestScore >= 60 ? '#BA7517'
                   : '#993C1D'
+                const rowKey = `${row.staffId}-${row.courseId}`
+                const isSelected = selectedId === rowKey
                 return (
-                  <tr key={`${row.staffId}-${row.courseId}`} style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', background: i % 2 === 1 ? '#FAFAF8' : '#FFFFFF' }}>
+                  <tr key={rowKey} onClick={() => setSelectedId(p => p === rowKey ? '' : rowKey)}
+                    style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', cursor: 'pointer', background: isSelected ? 'rgba(45,91,227,0.06)' : undefined, outline: isSelected ? '2px solid rgba(45,91,227,0.3)' : undefined, outlineOffset: '-2px' }}>
                     <td style={td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {row.staffPhoto

@@ -15,6 +15,7 @@ export default function AdminCourses() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>('title')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
@@ -109,8 +110,10 @@ export default function AdminCourses() {
                 {sortedCourses.map((course) => {
                   const cat = getCat(course.category_id)
                   const isLive = course.status === 'live'
+                  const isSelected = selectedId === course.id
                   return (
-                    <tr key={course.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                    <tr key={course.id} onClick={() => setSelectedId(p => p === course.id ? null : course.id)}
+                      style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', cursor: 'pointer', background: isSelected ? 'rgba(45,91,227,0.06)' : undefined, outline: isSelected ? '2px solid rgba(45,91,227,0.3)' : undefined, outlineOffset: '-2px' }}>
                       <td style={td}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <span style={{ fontSize: '20px' }}>{course.icon}</span>
@@ -121,14 +124,14 @@ export default function AdminCourses() {
                       <td style={td}><span style={{ padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: course.type === 'mandatory' ? 'rgba(153,60,29,0.1)' : 'rgba(45,91,227,0.1)', color: course.type === 'mandatory' ? '#993C1D' : '#2D5BE3' }}>{course.type === 'mandatory' ? 'Mandatory' : 'Optional'}</span></td>
                       <td style={td}>{course.pass_mark}%</td>
                       <td style={td}>
-                        <button onClick={() => toggleStatus(course)} disabled={saving === course.id} style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer', background: isLive ? 'rgba(15,110,86,0.1)' : 'rgba(0,0,0,0.06)', color: isLive ? '#0F6E56' : '#8A8A82' }}>
+                        <button onClick={e => { e.stopPropagation(); toggleStatus(course) }} disabled={saving === course.id} style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer', background: isLive ? 'rgba(15,110,86,0.1)' : 'rgba(0,0,0,0.06)', color: isLive ? '#0F6E56' : '#8A8A82' }}>
                           {saving === course.id ? '...' : isLive ? '🟢 Live' : '⬜ Draft'}
                         </button>
                       </td>
                       <td style={td}>
                         <div style={{ display: 'flex', gap: '6px' }}>
-                          <Link href={`/admin/builder?id=${course.id}`} style={{ padding: '5px 12px', background: 'rgba(45,91,227,0.08)', color: '#2D5BE3', borderRadius: '7px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>✏️ Edit</Link>
-                          <button onClick={() => deleteCourse(course)} disabled={deleting === course.id} style={{ padding: '5px 12px', background: 'rgba(153,60,29,0.08)', color: '#993C1D', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>{deleting === course.id ? '...' : '🗑'}</button>
+                          <Link href={`/admin/builder?id=${course.id}`} onClick={e => e.stopPropagation()} style={{ padding: '5px 12px', background: 'rgba(45,91,227,0.08)', color: '#2D5BE3', borderRadius: '7px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>✏️ Edit</Link>
+                          <button onClick={e => { e.stopPropagation(); deleteCourse(course) }} disabled={deleting === course.id} style={{ padding: '5px 12px', background: 'rgba(153,60,29,0.08)', color: '#993C1D', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>{deleting === course.id ? '...' : '🗑'}</button>
                         </div>
                       </td>
                     </tr>
