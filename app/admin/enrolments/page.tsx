@@ -27,7 +27,7 @@ export default function AdminEnrolments() {
   const [showBulk, setShowBulk] = useState(false)
   const [staffSearch, setStaffSearch] = useState('')
   const [assignMode, setAssignMode] = useState<'individual' | 'department'>('individual')
-  const [bulkDepartment, setBulkDepartment] = useState('')
+  const [bulkDepartments, setBulkDepartments] = useState<string[]>([])
 
   // Table controls
   const [search, setSearch] = useState('')
@@ -71,19 +71,14 @@ export default function AdminEnrolments() {
         .map((sid) => ({ staff_id: sid, course_id: bulkCourse, mandatory: bulkMandatory, due_date: bulkDue || null }))
       if (toInsert.length > 0) await supabase.from('enrolments').insert(toInsert)
     } else {
-      if (!bulkDepartment) { alert('Select a department'); setSaving(false); return }
-      const alreadyAssigned = deptEnrolments.some(
-        (e) => e.department_id === bulkDepartment && e.course_id === bulkCourse
-      )
-      if (!alreadyAssigned) {
-        await supabase.from('department_enrolments').insert({
-          department_id: bulkDepartment, course_id: bulkCourse,
-          mandatory: bulkMandatory, due_date: bulkDue || null,
-        })
-      }
+      if (bulkDepartments.length === 0) { alert('Select at least one department'); setSaving(false); return }
+      const toInsert = bulkDepartments
+        .filter((did) => !deptEnrolments.some((e) => e.department_id === did && e.course_id === bulkCourse))
+        .map((did) => ({ department_id: did, course_id: bulkCourse, mandatory: bulkMandatory, due_date: bulkDue || null }))
+      if (toInsert.length > 0) await supabase.from('department_enrolments').insert(toInsert)
     }
 
-    setBulkCourse(''); setBulkStaff([]); setBulkDue(''); setBulkDepartment(''); setShowBulk(false)
+    setBulkCourse(''); setBulkStaff([]); setBulkDue(''); setBulkDepartments([]); setShowBulk(false)
     await fetchAll()
     setSaving(false)
   }
@@ -151,7 +146,7 @@ export default function AdminEnrolments() {
   const sortIcon = (key: SortKey) => sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ' ↕'
   const assignLabel = assignMode === 'individual'
     ? `✓ Assign to ${bulkStaff.length} staff member${bulkStaff.length !== 1 ? 's' : ''}`
-    : bulkDepartment ? `✓ Assign to ${getDept(bulkDepartment)?.name || 'department'}` : '✓ Assign to department'
+    : bulkDepartments.length > 0 ? `✓ Assign to ${bulkDepartments.length} department${bulkDepartments.length !== 1 ? 's' : ''}` : '✓ Assign to departments'
 
   return (
     <div>
@@ -189,7 +184,7 @@ export default function AdminEnrolments() {
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', marginTop: '4px' }}>
             {([['individual', '👤 Individual'], ['department', '🏢 Department']] as const).map(([val, lbl]) => (
               <button key={val} type="button"
-                onClick={() => { setAssignMode(val); setBulkStaff([]); setBulkDepartment(''); setStaffSearch('') }}
+                onClick={() => { setAssignMode(val); setBulkStaff([]); setBulkDepartments([]); setStaffSearch('') }}
                 style={{ padding: '7px 16px', borderRadius: '8px', border: `1.5px solid ${assignMode === val ? '#2D5BE3' : 'rgba(0,0,0,0.14)'}`, background: assignMode === val ? 'rgba(45,91,227,0.08)' : '#fff', color: assignMode === val ? '#2D5BE3' : '#5A5A55', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
                 {lbl}
               </button>
@@ -232,11 +227,19 @@ export default function AdminEnrolments() {
 
           {assignMode === 'department' && (
             <>
-              <label style={label}>Select department *</label>
-              <select style={{ ...input, marginBottom: '16px' }} value={bulkDepartment} onChange={(e) => setBulkDepartment(e.target.value)}>
-                <option value="">— Select a department —</option>
-                {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
+              <label style={label}>Select departments *</label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', marginTop: '4px' }}>
+                {departments.map((d) => {
+                  const selected = bulkDepartments.includes(d.id)
+                  return (
+                    <button key={d.id} type="button"
+                      onClick={() => setBulkDepartments((p) => selected ? p.filter((x) => x !== d.id) : [...p, d.id])}
+                      style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${selected ? '#2D5BE3' : 'rgba(0,0,0,0.14)'}`, background: selected ? 'rgba(45,91,227,0.08)' : '#fff', color: selected ? '#2D5BE3' : '#5A5A55' }}>
+                      {selected ? '✓ ' : ''}{d.name}
+                    </button>
+                  )
+                })}
+              </div>
             </>
           )}
 
