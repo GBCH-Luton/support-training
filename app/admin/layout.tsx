@@ -24,7 +24,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!loading && !user) router.push('/login')
-    if (!loading && user && user.must_reset_password) router.push('/reset-password')
     if (!loading && user && user.role !== 'admin' && user.role !== 'training_admin') router.push('/')
   }, [user, loading, router])
 
