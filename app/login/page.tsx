@@ -18,7 +18,21 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     setSuccess('')
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+
+    // Only allow resets for registered staff members
+    const { data: staffRecord } = await supabase
+      .from('staff')
+      .select('id')
+      .ilike('email', email.trim())
+      .single()
+
+    if (!staffRecord) {
+      setLoading(false)
+      setError('No account found with that email address. Please use your work email.')
+      return
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/reset-password`,
     })
     setLoading(false)
@@ -26,7 +40,7 @@ export default function LoginPage() {
       const msg = error.message
       setError(msg && msg !== '{}' && msg !== '[]'
         ? msg
-        : 'Failed to send reset email. Check your email address is correct, or try again in a few minutes (email rate limits may apply).')
+        : 'Failed to send reset email. Please try again in a few minutes.')
     } else {
       setSuccess('Check your inbox — we sent a password reset link.')
     }

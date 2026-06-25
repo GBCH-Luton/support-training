@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-type Staff      = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; must_reset_password: boolean; photo_url?: string }
+type Staff      = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; photo_url?: string }
 type Department = { id: string; name: string; icon: string }
 type Role       = { id: string; name: string; label: string; color: string; bg_color: string; sort_order: number; is_admin: boolean }
 type SortKey    = 'name' | 'email' | 'job_title' | 'role' | 'active'
@@ -82,7 +82,7 @@ export default function AdminStaff() {
 
   async function fetchAll() {
     const [staffRes, deptRes, sdRes, rolesRes] = await Promise.all([
-      supabase.from('staff').select('id,name,email,job_title,role,active,must_reset_password,photo_url').order('name'),
+      supabase.from('staff').select('id,name,email,job_title,role,active,photo_url').order('name'),
       supabase.from('departments').select('*').order('sort_order'),
       supabase.from('staff_departments').select('staff_id,department_id'),
       supabase.from('roles').select('*').order('sort_order'),
@@ -106,7 +106,7 @@ export default function AdminStaff() {
     if (!newName.trim() || !newEmail.trim()) { alert('Name and email are required'); return }
     setSaving(true)
     const { data } = await supabase.from('staff')
-      .insert({ name:newName, email:newEmail, job_title:newJobTitle, role:newRole, active:true, must_reset_password:true })
+      .insert({ name:newName, email:newEmail, job_title:newJobTitle, role:newRole, active:true })
       .select().single()
     if (data && newDepts.length > 0)
       await supabase.from('staff_departments').insert(newDepts.map(d => ({ staff_id:data.id, department_id:d })))
@@ -121,10 +121,6 @@ export default function AdminStaff() {
   async function toggleActive(id: string, cur: boolean) {
     await supabase.from('staff').update({ active: !cur }).eq('id', id)
     setStaff(p => p.map(s => s.id === id ? { ...s, active: !cur } : s))
-  }
-  async function toggleForceReset(id: string, cur: boolean) {
-    await supabase.from('staff').update({ must_reset_password: !cur }).eq('id', id)
-    setStaff(p => p.map(s => s.id === id ? { ...s, must_reset_password: !cur } : s))
   }
   async function toggleDept(staffId: string, deptId: string) {
     const cur = staffDepts[staffId] || []
@@ -328,7 +324,6 @@ export default function AdminStaff() {
               ))}
             </div>
           </div>
-          <p style={{ fontSize:'12px', color:'#8A8A82', marginBottom:'14px' }}>New staff will be required to reset their password on first login.</p>
           <button type="button" onClick={addStaff} disabled={saving}
             style={{ padding:'10px 24px', background:'#2D5BE3', color:'#fff', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>
             {saving ? 'Saving…' : 'Add staff member'}
@@ -396,12 +391,11 @@ export default function AdminStaff() {
                 ))}
                 <th style={th}>Departments</th>
                 <th onClick={()=>toggleSort('active')} style={{ ...th, cursor:'pointer', userSelect:'none', whiteSpace:'nowrap' }}>Status{sortIcon('active')}</th>
-                <th style={th}>Pwd reset</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0
-                ? <tr><td colSpan={7} style={{ ...td, textAlign:'center', color:'#8A8A82', padding:'32px' }}>No staff match your search.</td></tr>
+                ? <tr><td colSpan={6} style={{ ...td, textAlign:'center', color:'#8A8A82', padding:'32px' }}>No staff match your search.</td></tr>
                 : filtered.map(s => {
                   const rs = roleStyle(s.role)
                   const assignedDepts = departments.filter(d=>(staffDepts[s.id]||[]).includes(d.id))
@@ -467,12 +461,6 @@ export default function AdminStaff() {
                         <button type="button" onClick={()=>toggleActive(s.id,s.active)}
                           style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:600, border:'none', cursor:'pointer', background:s.active?'rgba(15,110,86,0.1)':'rgba(153,60,29,0.08)', color:s.active?'#0F6E56':'#993C1D', whiteSpace:'nowrap' }}>
                           {s.active?'🟢 Active':'🔴 Inactive'}
-                        </button>
-                      </td>
-                      <td style={td}>
-                        <button type="button" onClick={()=>toggleForceReset(s.id,s.must_reset_password)}
-                          style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:600, border:'none', cursor:'pointer', background:s.must_reset_password?'rgba(153,60,29,0.08)':'rgba(0,0,0,0.05)', color:s.must_reset_password?'#993C1D':'#8A8A82', whiteSpace:'nowrap' }}>
-                          {s.must_reset_password?'🔒 Required':'✓ Done'}
                         </button>
                       </td>
                     </tr>

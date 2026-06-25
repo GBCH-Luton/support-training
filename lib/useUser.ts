@@ -9,7 +9,6 @@ type StaffUser = {
   email: string
   role: string
   job_title: string
-  must_reset_password: boolean
 }
 
 export function useUser() {
@@ -25,7 +24,7 @@ export function useUser() {
       // Match them to the staff table by email
       const { data: staffData } = await supabase
         .from('staff')
-        .select('id, name, email, role, job_title, must_reset_password')
+        .select('id, name, email, role, job_title')
         .eq('email', session.user.email)
         .single()
 
@@ -39,7 +38,7 @@ export function useUser() {
       if (!session) { setUser(null); setLoading(false); return }
       const { data: staffData } = await supabase
         .from('staff')
-        .select('id, name, email, role, job_title, must_reset_password')
+        .select('id, name, email, role, job_title')
         .eq('email', session.user.email)
         .single()
       if (staffData) setUser(staffData)
