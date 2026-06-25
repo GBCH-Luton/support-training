@@ -18,6 +18,7 @@ export default function AdminEnrolments() {
   const [deptEnrolments, setDeptEnrolments] = useState<DeptEnrolment[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   // Form
   const [bulkCourse, setBulkCourse] = useState('')
@@ -312,8 +313,12 @@ export default function AdminEnrolments() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row) => (
-                <tr key={`${row.kind}-${row.id}`} style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              {filtered.map((row) => {
+                const rowKey = `${row.kind}-${row.id}`
+                const isSelected = selectedId === rowKey
+                return (
+                <tr key={rowKey} onClick={() => setSelectedId(p => p === rowKey ? null : rowKey)}
+                  style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', cursor: 'pointer', background: isSelected ? 'rgba(45,91,227,0.06)' : undefined, outline: isSelected ? '2px solid rgba(45,91,227,0.3)' : undefined, outlineOffset: '-2px' }}>
                   <td style={td}>
                     {row.kind === 'department'
                       ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><span style={{ fontSize: '13px' }}>🏢</span><strong>{row.name}</strong></span>
@@ -343,13 +348,14 @@ export default function AdminEnrolments() {
                   </td>
                   <td style={{ ...td, color: '#8A8A82' }}>{row.enrolled ? new Date(row.enrolled).toLocaleDateString() : '—'}</td>
                   <td style={td}>
-                    <button onClick={() => removeEnrolment(row.id, row.kind)}
+                    <button onClick={(e) => { e.stopPropagation(); removeEnrolment(row.id, row.kind) }}
                       style={{ padding: '4px 10px', background: 'rgba(153,60,29,0.08)', color: '#993C1D', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                       Remove
                     </button>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>
