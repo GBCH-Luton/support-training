@@ -3,7 +3,11 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-type Staff      = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; photo_url?: string }
+type Staff      = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; photo_url?: string; must_reset_password?: boolean }
+type ResetModal =
+  | { step: 'confirm'; staffId: string; name: string; email: string }
+  | { step: 'done';    name: string; tempPassword: string }
+  | null
 type Department = { id: string; name: string; icon: string }
 type Role       = { id: string; name: string; label: string; color: string; bg_color: string; sort_order: number; is_admin: boolean }
 type SortKey    = 'name' | 'email' | 'job_title' | 'role' | 'active'
@@ -70,6 +74,10 @@ export default function AdminStaff() {
   const [roleFormName, setRoleFormName]   = useState('')
   const [roleFormColor, setRoleFormColor] = useState('#2D5BE3')
   const [rolesSaving, setRolesSaving]   = useState(false)
+
+  const [resetModal, setResetModal]   = useState<ResetModal>(null)
+  const [resetting, setResetting]     = useState(false)
+  const [resetError, setResetError]   = useState('')
 
   const [showAdd, setShowAdd]         = useState(false)
   const [newName, setNewName]         = useState('')
@@ -159,6 +167,26 @@ export default function AdminStaff() {
     const { data: { publicUrl } } = supabase.storage.from('staff-photos').getPublicUrl(path)
     await supabase.from('staff').update({ photo_url: publicUrl }).eq('id', staffId)
     setStaff(p => p.map(s => s.id === staffId ? { ...s, photo_url: publicUrl } : s))
+  }
+
+  // ── Password reset ───────────────────────────────────────────────────────────
+  async function handleResetPassword() {
+    if (!resetModal || resetModal.step !== 'confirm') return
+    setResetting(true)
+    setResetError('')
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin/reset-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token ?? ''}`,
+      },
+      body: JSON.stringify({ staffId: resetModal.staffId, email: resetModal.email }),
+    })
+    const json = await res.json()
+    setResetting(false)
+    if (!res.ok) { setResetError(json.error || 'Something went wrong'); return }
+    setResetModal({ step: 'done', name: resetModal.name, tempPassword: json.tempPassword })
   }
 
   // ── Roles ────────────────────────────────────────────────────────────────────
@@ -458,16 +486,88 @@ export default function AdminStaff() {
                         )}
                       </td>
                       <td style={td}>
-                        <button type="button" onClick={()=>toggleActive(s.id,s.active)}
-                          style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:600, border:'none', cursor:'pointer', background:s.active?'rgba(15,110,86,0.1)':'rgba(153,60,29,0.08)', color:s.active?'#0F6E56':'#993C1D', whiteSpace:'nowrap' }}>
-                          {s.active?'🟢 Active':'🔴 Inactive'}
-                        </button>
+                        <div style={{ display:'flex', flexDirection:'column', gap:'5px', alignItems:'flex-start' }}>
+                          <button type="button" onClick={()=>toggleActive(s.id,s.active)}
+                            style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:600, border:'none', cursor:'pointer', background:s.active?'rgba(15,110,86,0.1)':'rgba(153,60,29,0.08)', color:s.active?'#0F6E56':'#993C1D', whiteSpace:'nowrap' }}>
+                            {s.active?'🟢 Active':'🔴 Inactive'}
+                          </button>
+                          <button type="button"
+                            onClick={() => { setResetError(''); setResetModal({ step:'confirm', staffId:s.id, name:s.name, email:s.email }) }}
+                            style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:600, border:'1px solid rgba(133,79,11,0.25)', cursor:'pointer', background:'rgba(133,79,11,0.07)', color:'#854F0B', whiteSpace:'nowrap' }}>
+                            🔑 Reset password
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
                 })}
             </tbody>
           </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+      {/* ── Reset password modal ─────────────────────────────────────────────── */}
+      {resetModal && (
+        <div
+          onClick={() => !resetting && setResetModal(null)}
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background:'#fff', borderRadius:'18px', padding:'28px 28px 24px', maxWidth:'460px', width:'100%', boxShadow:'0 24px 60px rgba(0,0,0,0.22)' }}>
+
+            {resetModal.step === 'confirm' ? (<>
+              <h2 style={{ fontSize:'18px', fontWeight:700, color:'#1A1A18', marginBottom:'10px' }}>Reset password for {resetModal.name}?</h2>
+              <p style={{ fontSize:'14px', color:'#5A5A55', lineHeight:1.6, marginBottom:'18px' }}>
+                This will generate a <strong>unique temporary password</strong> for <strong>{resetModal.email}</strong>.
+                It will be shown to you once so you can tell them directly — in person or by phone.
+                They will be forced to set a new password as soon as they log in.
+              </p>
+              {resetError && (
+                <div style={{ padding:'11px 14px', background:'rgba(153,60,29,0.08)', color:'#993C1D', borderRadius:'10px', fontSize:'13px', marginBottom:'16px', lineHeight:1.5 }}>
+                  ⚠️ {resetError}
+                </div>
+              )}
+              <div style={{ display:'flex', gap:'10px' }}>
+                <button type="button" onClick={handleResetPassword} disabled={resetting}
+                  style={{ flex:1, padding:'13px', background:resetting?'#8A8A82':'#2D5BE3', color:'#fff', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:600, cursor:resetting?'not-allowed':'pointer' }}>
+                  {resetting ? 'Generating…' : 'Generate temp password'}
+                </button>
+                <button type="button" onClick={() => setResetModal(null)} disabled={resetting}
+                  style={{ padding:'13px 18px', background:'#F4F3EF', color:'#5A5A55', border:'1px solid rgba(0,0,0,0.12)', borderRadius:'10px', fontSize:'14px', fontWeight:600, cursor:'pointer' }}>
+                  Cancel
+                </button>
+              </div>
+            </>) : (<>
+              <div style={{ width:'48px', height:'48px', background:'rgba(15,110,86,0.1)', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', marginBottom:'16px' }}>✅</div>
+              <h2 style={{ fontSize:'18px', fontWeight:700, color:'#1A1A18', marginBottom:'8px' }}>Temp password ready</h2>
+              <p style={{ fontSize:'13px', color:'#5A5A55', lineHeight:1.6, marginBottom:'16px' }}>
+                Tell <strong>{resetModal.name}</strong> this password directly — in person, by phone, or secure message.
+                It will <strong>not be shown again</strong>.
+              </p>
+
+              {/* Password display */}
+              <div style={{ background:'#F4F3EF', border:'2px solid #1A1A18', borderRadius:'10px', padding:'16px 18px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'14px', marginBottom:'14px' }}>
+                <span style={{ fontFamily:'monospace', fontSize:'24px', fontWeight:700, color:'#1A1A18', letterSpacing:'0.08em' }}>
+                  {resetModal.tempPassword}
+                </span>
+                <button type="button" onClick={() => navigator.clipboard.writeText(resetModal.tempPassword)}
+                  style={{ padding:'7px 14px', background:'#1A1A18', color:'#fff', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap', flexShrink:0 }}>
+                  Copy
+                </button>
+              </div>
+
+              <div style={{ background:'rgba(186,117,23,0.08)', border:'1px solid rgba(186,117,23,0.28)', borderRadius:'8px', padding:'12px 14px', marginBottom:'20px', fontSize:'13px', color:'#854F0B', lineHeight:1.5 }}>
+                🔒 When {resetModal.name} logs in with this, they will be taken straight to a "set new password" screen and cannot access anything else until they do.
+              </div>
+
+              <button type="button" onClick={() => setResetModal(null)}
+                style={{ width:'100%', padding:'13px', background:'#0F6E56', color:'#fff', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:600, cursor:'pointer' }}>
+                Done
+              </button>
+            </>)}
+          </div>
         </div>
       )}
     </div>

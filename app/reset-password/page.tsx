@@ -11,8 +11,11 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [isForced, setIsForced] = useState(false)
 
   useEffect(() => {
+    setIsForced(new URLSearchParams(window.location.search).get('force') === '1')
+  }, [])
     // PKCE flow: Supabase delivers a ?code= param — exchange it for a session
     const code = new URLSearchParams(window.location.search).get('code')
     if (code) {
@@ -58,7 +61,13 @@ export default function ResetPasswordPage() {
         </div>
 
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1A1A18', marginBottom: '6px' }}>Set new password</h1>
-        <p style={{ fontSize: '14px', color: '#8A8A82', marginBottom: '24px' }}>Choose a new password for your account.</p>
+        <p style={{ fontSize: '14px', color: '#8A8A82', marginBottom: isForced ? '14px' : '24px' }}>Choose a new password for your account.</p>
+
+        {isForced && (
+          <div style={{ padding: '12px 14px', background: 'rgba(186,117,23,0.09)', color: '#854F0B', borderRadius: '10px', fontSize: '13px', marginBottom: '20px', border: '1px solid rgba(186,117,23,0.28)', lineHeight: 1.5 }}>
+            🔒 Your password was reset by an administrator. Please set a new password to continue — you cannot access the system until you do.
+          </div>
+        )}
 
         {success ? (
           <div style={{ padding: '14px', background: 'rgba(45,122,58,0.08)', color: '#2D7A3A', borderRadius: '12px', fontSize: '14px', textAlign: 'center' }}>

@@ -55,7 +55,17 @@ export default function LoginPage() {
       setError(error.message)
       setLoading(false)
     } else {
-      router.push('/')
+      // Check if an admin has flagged this account for a forced password change
+      const { data: staffData } = await supabase
+        .from('staff')
+        .select('must_reset_password')
+        .ilike('email', email.trim())
+        .single()
+      if (staffData?.must_reset_password) {
+        router.push('/reset-password?force=1')
+      } else {
+        router.push('/')
+      }
     }
   }
 
