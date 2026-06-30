@@ -419,11 +419,12 @@ export default function AdminStaff() {
                 ))}
                 <th style={th}>Departments</th>
                 <th onClick={()=>toggleSort('active')} style={{ ...th, cursor:'pointer', userSelect:'none', whiteSpace:'nowrap' }}>Status{sortIcon('active')}</th>
+                <th style={th}>Reset password</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0
-                ? <tr><td colSpan={6} style={{ ...td, textAlign:'center', color:'#8A8A82', padding:'32px' }}>No staff match your search.</td></tr>
+                ? <tr><td colSpan={7} style={{ ...td, textAlign:'center', color:'#8A8A82', padding:'32px' }}>No staff match your search.</td></tr>
                 : filtered.map(s => {
                   const rs = roleStyle(s.role)
                   const assignedDepts = departments.filter(d=>(staffDepts[s.id]||[]).includes(d.id))
@@ -486,17 +487,17 @@ export default function AdminStaff() {
                         )}
                       </td>
                       <td style={td}>
-                        <div style={{ display:'flex', flexDirection:'column', gap:'5px', alignItems:'flex-start' }}>
-                          <button type="button" onClick={()=>toggleActive(s.id,s.active)}
-                            style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:600, border:'none', cursor:'pointer', background:s.active?'rgba(15,110,86,0.1)':'rgba(153,60,29,0.08)', color:s.active?'#0F6E56':'#993C1D', whiteSpace:'nowrap' }}>
-                            {s.active?'🟢 Active':'🔴 Inactive'}
-                          </button>
-                          <button type="button"
-                            onClick={() => { setResetError(''); setResetModal({ step:'confirm', staffId:s.id, name:s.name, email:s.email }) }}
-                            style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:600, border:'1px solid rgba(133,79,11,0.25)', cursor:'pointer', background:'rgba(133,79,11,0.07)', color:'#854F0B', whiteSpace:'nowrap' }}>
-                            🔑 Reset password
-                          </button>
-                        </div>
+                        <button type="button" onClick={()=>toggleActive(s.id,s.active)}
+                          style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:600, border:'none', cursor:'pointer', background:s.active?'rgba(15,110,86,0.1)':'rgba(153,60,29,0.08)', color:s.active?'#0F6E56':'#993C1D', whiteSpace:'nowrap' }}>
+                          {s.active?'🟢 Active':'🔴 Inactive'}
+                        </button>
+                      </td>
+                      <td style={td}>
+                        <button type="button"
+                          onClick={e => { e.stopPropagation(); setResetError(''); setResetModal({ step:'confirm', staffId:s.id, name:s.name, email:s.email }) }}
+                          style={{ padding:'3px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:600, border:'1px solid rgba(133,79,11,0.25)', cursor:'pointer', background:'rgba(133,79,11,0.07)', color:'#854F0B', whiteSpace:'nowrap' }}>
+                          🔑 Reset password
+                        </button>
                       </td>
                     </tr>
                   )
