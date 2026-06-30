@@ -505,9 +505,6 @@ export default function AdminStaff() {
           </table>
         </div>
       )}
-    </div>
-  )
-}
 
       {/* ── Reset password modal ─────────────────────────────────────────────── */}
       {resetModal && (
