@@ -21,6 +21,7 @@ function BuilderInner() {
   const [allDepartments, setAllDepartments] = useState<{ id: string; name: string; icon: string }[]>([])
   const [courseDepts, setCourseDepts] = useState<string[]>([])
   const [finalExamCount, setFinalExamCount] = useState(0)
+  const [examQuestionCount, setExamQuestionCount] = useState('')
 
   // Course form fields
   const [title, setTitle] = useState('')
@@ -42,7 +43,7 @@ function BuilderInner() {
       if (courseId) {
         setLoading(true)
         const { data: course } = await supabase.from('courses').select('*').eq('id', courseId).single()
-        if (course) { setTitle(course.title); setDescription(course.description || ''); setCategoryId(course.category_id); setType(course.type); setStatus(course.status); setPassMark(course.pass_mark); setReminderCycle(course.reminder_cycle || 6); setIcon(course.icon || '📖') }
+        if (course) { setTitle(course.title); setDescription(course.description || ''); setCategoryId(course.category_id); setType(course.type); setStatus(course.status); setPassMark(course.pass_mark); setReminderCycle(course.reminder_cycle || 6); setIcon(course.icon || '📖'); setExamQuestionCount(course.exam_question_count ? String(course.exam_question_count) : '') }
         const { data: secData } = await supabase.from('course_sections').select('*').eq('course_id', courseId).order('sort_order')
         if (secData) setSections(secData)
           
@@ -68,7 +69,7 @@ function BuilderInner() {
   async function saveCourse() {
     if (!title.trim()) { alert('Please enter a course title'); return }
     setSaving(true)
-    const payload = { title, description, category_id: categoryId, type, status, pass_mark: passMark, reminder_cycle: type === 'mandatory' ? reminderCycle : null, icon }
+    const payload = { title, description, category_id: categoryId, type, status, pass_mark: passMark, reminder_cycle: type === 'mandatory' ? reminderCycle : null, icon, exam_question_count: examQuestionCount ? parseInt(examQuestionCount) : null }
     if (currentCourseId) {
       await supabase.from('courses').update(payload).eq('id', currentCourseId)
     } else {
@@ -205,7 +206,7 @@ function BuilderInner() {
             <span style={{ fontSize: '22px' }}>{finalExamCount > 0 ? '✅' : '⚠️'}</span>
             <div>
               <div style={{ fontSize: '14px', fontWeight: 700, color: finalExamCount > 0 ? '#0F6E56' : '#854F0B' }}>
-                {finalExamCount > 0 ? `Final exam ready (${finalExamCount} questions)` : 'No final exam yet'}
+                {finalExamCount > 0 ? `Final exam ready (${finalExamCount} questions in bank)` : 'No final exam yet'}
               </div>
               <div style={{ fontSize: '12px', color: '#5A5A55', marginTop: '2px' }}>
                 {finalExamCount > 0
@@ -214,6 +215,26 @@ function BuilderInner() {
               </div>
             </div>
           </div>
+          {finalExamCount > 0 && (
+            <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              <label style={label}>Random questions per attempt</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', flexWrap: 'wrap' }}>
+                <input
+                  style={{ ...input, width: '90px' }}
+                  type="number" min={1} max={finalExamCount}
+                  value={examQuestionCount}
+                  onChange={e => setExamQuestionCount(e.target.value)}
+                  placeholder="All"
+                />
+                <span style={{ fontSize: '12px', color: '#5A5A55' }}>
+                  {examQuestionCount && parseInt(examQuestionCount) < finalExamCount
+                    ? `Staff will see ${examQuestionCount} random questions from the ${finalExamCount} in the bank — different every attempt`
+                    : `Leave blank to show all ${finalExamCount} questions every time`}
+                </span>
+              </div>
+              <div style={{ fontSize: '11px', color: '#8A8A82', marginTop: '6px' }}>Click "Save changes" above to apply</div>
+            </div>
+          )}
         </div>
       )}
 {/* Departments */}

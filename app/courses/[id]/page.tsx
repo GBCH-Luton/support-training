@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import { useUser } from '@/lib/useUser'
 
-type Course = { id: string; title: string; description: string; type: string; pass_mark: number; reminder_cycle: number; icon: string }
+type Course = { id: string; title: string; description: string; type: string; pass_mark: number; reminder_cycle: number; icon: string; exam_question_count?: number | null }
 
 const CARD_SOLIDS = ['#D4472A', '#1E3FB8', '#4A3FB0', '#0F6E56', '#BA7517', '#99355A']
 function courseColour(id: string) {
@@ -48,6 +48,7 @@ export default function CoursePage() {
   const [examResult, setExamResult] = useState<{ score: number; passed: boolean } | null>(null)
   const [examQ, setExamQ] = useState(0)
   const [examPassedBefore, setExamPassedBefore] = useState(false)
+  const [examQuestions, setExamQuestions] = useState<Question[]>([])
 
   useEffect(() => {
     if (!userLoading && !user) router.push('/login')
@@ -109,6 +110,18 @@ export default function CoursePage() {
 
   function goToQuiz() { setAnswers({}); setQuizResult(null); setQuizQ(0); setShowQuiz(true) }
 
+  function startExam() {
+    const bank = questions.filter(q => q.quiz_type === 'final_exam')
+    const shuffled = [...bank].sort(() => Math.random() - 0.5)
+    const count = course?.exam_question_count
+    const selected = count && count < shuffled.length ? shuffled.slice(0, count) : shuffled
+    setExamQuestions(selected)
+    setExamAnswers({})
+    setExamResult(null)
+    setExamQ(0)
+    setInFinalExam(true)
+  }
+
   async function saveSectionProgress(sectionId: string, score: number, passed: boolean) {
     await supabase.from('section_progress').insert({ staff_id: user!.id, course_id: courseId, section_id: sectionId, check_score: score, check_passed: passed })
   }
@@ -133,8 +146,8 @@ export default function CoursePage() {
 
   async function submitExam() {
     let correct = 0
-    finalQuestions.forEach((q) => { if (examAnswers[q.id] === q.correct_answer) correct++ })
-    const score = Math.round((correct / finalQuestions.length) * 100)
+    examQuestions.forEach((q) => { if (examAnswers[q.id] === q.correct_answer) correct++ })
+    const score = Math.round((correct / examQuestions.length) * 100)
     const passed = score >= (course?.pass_mark || 80)
     const { data: prev } = await supabase.from('exam_attempts').select('id').eq('staff_id', user!.id).eq('course_id', courseId)
     await supabase.from('exam_attempts').insert({ staff_id: user!.id, course_id: courseId, attempt_number: (prev?.length || 0) + 1, score, passed })
@@ -162,7 +175,7 @@ export default function CoursePage() {
         )
       }
       const bySection = sections.map((s) => {
-        const qs = finalQuestions.filter((q) => q.section_id === s.id)
+        const qs = examQuestions.filter((q) => q.section_id === s.id)
         if (qs.length === 0) return null
         const correct = qs.filter((q) => examAnswers[q.id] === q.correct_answer).length
         return { section: s, pct: Math.round((correct / qs.length) * 100) }
@@ -191,22 +204,22 @@ export default function CoursePage() {
               })}
             </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <button onClick={() => { setExamAnswers({}); setExamResult(null); setExamQ(0) }} style={primaryBtn}>Retake final exam</button>
+              <button onClick={startExam} style={primaryBtn}>Retake final exam</button>
               <button onClick={() => { setInFinalExam(false); setExamAnswers({}); setExamResult(null); setExamQ(0) }} style={secondaryBtn}>Back to course</button>
             </div>
           </div>
         </div>
       )
     }
-    const q = finalQuestions[examQ]
-    const isLast = examQ === finalQuestions.length - 1
+    const q = examQuestions[examQ]
+    const isLast = examQ === examQuestions.length - 1
     return (
       <div style={pageStyle}>
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
           <button onClick={() => { setInFinalExam(false); setExamAnswers({}); setExamQ(0) }} style={backBtn}>← Back to course</button>
-          <div style={{ marginTop: '16px', marginBottom: '6px', display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(83,74,183,0.1)', color: '#534AB7', fontSize: '12px', fontWeight: 600 }}>★ Final exam · {examQ + 1} of {finalQuestions.length} · Pass {course.pass_mark}%</div>
+          <div style={{ marginTop: '16px', marginBottom: '6px', display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(83,74,183,0.1)', color: '#534AB7', fontSize: '12px', fontWeight: 600 }}>★ Final exam · {examQ + 1} of {examQuestions.length} · Pass {course.pass_mark}%</div>
           <div style={{ height: '6px', background: '#EDEBE5', borderRadius: '3px', marginBottom: '24px', overflow: 'hidden', marginTop: '10px' }}>
-            <div style={{ width: `${(examQ / finalQuestions.length) * 100}%`, height: '100%', background: '#534AB7', transition: 'width .3s', borderRadius: '3px' }} />
+            <div style={{ width: `${(examQ / examQuestions.length) * 100}%`, height: '100%', background: '#534AB7', transition: 'width .3s', borderRadius: '3px' }} />
           </div>
           <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', lineHeight: '1.4' }}>{q.question_text}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
@@ -227,9 +240,9 @@ export default function CoursePage() {
             {!isLast ? (
               <button onClick={() => setExamQ(examQ + 1)} disabled={!examAnswers[q.id]} style={{ ...primaryBtn, background: '#534AB7', opacity: !examAnswers[q.id] ? 0.4 : 1, cursor: !examAnswers[q.id] ? 'not-allowed' : 'pointer' }}>Next →</button>
             ) : (
-              <button onClick={submitExam} disabled={finalQuestions.some((qq) => !examAnswers[qq.id])} style={{ ...primaryBtn, background: '#534AB7', opacity: finalQuestions.some((qq) => !examAnswers[qq.id]) ? 0.4 : 1, cursor: finalQuestions.some((qq) => !examAnswers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit exam</button>
+              <button onClick={submitExam} disabled={examQuestions.some((qq) => !examAnswers[qq.id])} style={{ ...primaryBtn, background: '#534AB7', opacity: examQuestions.some((qq) => !examAnswers[qq.id]) ? 0.4 : 1, cursor: examQuestions.some((qq) => !examAnswers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit exam</button>
             )}
-            <span style={{ fontSize: '12px', color: '#8A8A82', marginLeft: 'auto' }}>{finalQuestions.filter((qq) => examAnswers[qq.id]).length}/{finalQuestions.length} answered</span>
+            <span style={{ fontSize: '12px', color: '#8A8A82', marginLeft: 'auto' }}>{examQuestions.filter((qq) => examAnswers[qq.id]).length}/{examQuestions.length} answered</span>
           </div>
         </div>
       </div>
@@ -448,7 +461,12 @@ export default function CoursePage() {
             <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: '#534AB7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>★</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '15px', fontWeight: 600 }}>Final course exam</div>
-              <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '2px' }}>{finalQuestions.length} questions · Pass {course.pass_mark}%{allSectionsPassed ? '' : ' · 🔒 Complete all sections first'}</div>
+              <div style={{ fontSize: '12px', color: '#8A8A82', marginTop: '2px' }}>
+                {course.exam_question_count && course.exam_question_count < finalQuestions.length
+                  ? `${course.exam_question_count} random questions from a bank of ${finalQuestions.length} · Pass ${course.pass_mark}%`
+                  : `${finalQuestions.length} questions · Pass ${course.pass_mark}%`}
+                {allSectionsPassed ? '' : ' · 🔒 Complete all sections first'}
+              </div>
             </div>
           </div>
         )}
@@ -456,7 +474,7 @@ export default function CoursePage() {
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           {sections.length > 0 && <button onClick={() => { setStarted(true); setCurrentIndex(0) }} style={primaryBtn}>Start course →</button>}
           {finalQuestions.length > 0 && allSectionsPassed && (
-            <button onClick={() => { setExamAnswers({}); setExamResult(null); setExamQ(0); setInFinalExam(true) }} style={{ ...primaryBtn, background: '#534AB7' }}>★ Take final exam</button>
+            <button onClick={startExam} style={{ ...primaryBtn, background: '#534AB7' }}>★ Take final exam</button>
           )}
         </div>
       </div>
