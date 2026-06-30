@@ -56,29 +56,33 @@ export async function POST(request: NextRequest) {
   }
 
   // ── 4. Find the target user in Supabase Auth ─────────────────────────────────
-  // We list users and match by email because we don't store the auth UUID in the
-  // staff table. Fine for small orgs; paginate if headcount exceeds ~500.
   const { data: { users }, error: listErr } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   if (listErr) {
     return NextResponse.json({ error: 'Failed to look up users' }, { status: 500 })
   }
 
-  const targetUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
-  if (!targetUser) {
-    return NextResponse.json(
-      { error: `No login account found for ${email}. This staff member was likely added before the current system — remove and re-add them using the Add Staff form to create their account.` },
-      { status: 404 }
-    )
-  }
-
-  // ── 5. Generate the temp password and set it in Supabase Auth ────────────────
   const tempPassword = generateTempPassword()
-  const { error: updateErr } = await adminClient.auth.admin.updateUserById(
-    targetUser.id,
-    { password: tempPassword }
-  )
-  if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 })
+  const existingUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+
+  if (existingUser) {
+    // ── 5a. Auth account exists — update the password ─────────────────────────
+    const { error: updateErr } = await adminClient.auth.admin.updateUserById(
+      existingUser.id,
+      { password: tempPassword }
+    )
+    if (updateErr) {
+      return NextResponse.json({ error: updateErr.message }, { status: 500 })
+    }
+  } else {
+    // ── 5b. No auth account yet — create one on the spot ─────────────────────
+    const { error: createErr } = await adminClient.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+    })
+    if (createErr) {
+      return NextResponse.json({ error: createErr.message }, { status: 500 })
+    }
   }
 
   // ── 6. Flag the staff record — login will redirect them to /reset-password ───
