@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-type Staff      = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; photo_url?: string; must_reset_password?: boolean }
+type Staff      = { id: string; name: string; email: string; job_title: string; active: boolean; photo_url?: string; must_reset_password?: boolean }
 type ResetModal =
   | { step: 'confirm'; staffId: string; name: string; email: string }
   | { step: 'done';    name: string; tempPassword: string; isNew?: boolean }
@@ -75,6 +75,8 @@ export default function AdminStaff() {
   const [roleFormColor, setRoleFormColor] = useState('#2D5BE3')
   const [rolesSaving, setRolesSaving]   = useState(false)
 
+  const [staffRoles, setStaffRoles]   = useState<Record<string, string>>({})
+
   const [resetModal, setResetModal]   = useState<ResetModal>(null)
   const [resetting, setResetting]     = useState(false)
   const [resetError, setResetError]   = useState('')
@@ -89,11 +91,12 @@ export default function AdminStaff() {
   useEffect(() => { fetchAll() }, [])
 
   async function fetchAll() {
-    const [staffRes, deptRes, sdRes, rolesRes] = await Promise.all([
-      supabase.from('staff').select('id,name,email,job_title,role,active,photo_url').order('name'),
+    const [staffRes, deptRes, sdRes, rolesRes, permsRes] = await Promise.all([
+      supabase.from('staff').select('id,name,email,job_title,active,photo_url').order('name'),
       supabase.from('departments').select('*').order('sort_order'),
       supabase.from('staff_departments').select('staff_id,department_id'),
       supabase.from('roles').select('*').order('sort_order'),
+      supabase.from('training_permissions').select('staff_id,role'),
     ])
     if (staffRes.data)  setStaff(staffRes.data)
     if (deptRes.data)   setDepartments(deptRes.data)
@@ -102,6 +105,11 @@ export default function AdminStaff() {
       const map: Record<string, string[]> = {}
       sdRes.data.forEach(r => { if (!map[r.staff_id]) map[r.staff_id] = []; map[r.staff_id].push(r.department_id) })
       setStaffDepts(map)
+    }
+    if (permsRes.data) {
+      const permsMap: Record<string, string> = {}
+      permsRes.data.forEach(p => { permsMap[p.staff_id] = p.role })
+      setStaffRoles(permsMap)
     }
     setLoading(false)
   }
@@ -135,8 +143,8 @@ export default function AdminStaff() {
   }
 
   async function changeRole(id: string, role: string) {
-    await supabase.from('staff').update({ role }).eq('id', id)
-    setStaff(p => p.map(s => s.id === id ? { ...s, role } : s))
+    await supabase.from('training_permissions').upsert({ staff_id: id, role })
+    setStaffRoles(p => ({ ...p, [id]: role }))
   }
   async function toggleActive(id: string, cur: boolean) {
     await supabase.from('staff').update({ active: !cur }).eq('id', id)
@@ -250,16 +258,18 @@ export default function AdminStaff() {
     let list = q ? staff.filter(s =>
       s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.job_title||'').toLowerCase().includes(q)
     ) : [...staff]
-    if (filterRole)   list = list.filter(s => s.role === filterRole)
+    if (filterRole)   list = list.filter(s => staffRoles[s.id] === filterRole)
     if (filterDept)   list = list.filter(s => (staffDepts[s.id] || []).includes(filterDept))
     if (filterJob)    list = list.filter(s => s.job_title === filterJob)
     if (filterStatus) list = list.filter(s => s.active === (filterStatus === 'active'))
     return list.sort((a, b) => {
-      const av = sortKey === 'active' ? String(a.active) : (a[sortKey as keyof Staff] as string || '')
-      const bv = sortKey === 'active' ? String(b.active) : (b[sortKey as keyof Staff] as string || '')
-      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
+      const getVal = (s: Staff) =>
+        sortKey === 'active' ? String(s.active) :
+        sortKey === 'role'   ? (staffRoles[s.id] ?? '') :
+                               (s[sortKey as keyof Staff] as string || '')
+      return sortDir === 'asc' ? getVal(a).localeCompare(getVal(b)) : getVal(b).localeCompare(getVal(a))
     })
-  }, [staff, search, filterRole, filterDept, filterJob, filterStatus, staffDepts, sortKey, sortDir])
+  }, [staff, staffRoles, search, filterRole, filterDept, filterJob, filterStatus, staffDepts, sortKey, sortDir])
 
   return (
     <div>
@@ -443,7 +453,7 @@ export default function AdminStaff() {
               {filtered.length === 0
                 ? <tr><td colSpan={7} style={{ ...td, textAlign:'center', color:'#8A8A82', padding:'32px' }}>No staff match your search.</td></tr>
                 : filtered.map(s => {
-                  const rs = roleStyle(s.role)
+                  const rs = roleStyle(staffRoles[s.id] ?? 'sw')
                   const assignedDepts = departments.filter(d=>(staffDepts[s.id]||[]).includes(d.id))
                   const deptOpen = openDeptMenu === s.id
                   return (
@@ -472,7 +482,7 @@ export default function AdminStaff() {
                       <td style={{ ...td, color:'#5A5A55' }}>{s.email}</td>
                       <td style={td}>{s.job_title||'—'}</td>
                       <td style={td}>
-                        <select value={s.role} onChange={e=>changeRole(s.id,e.target.value)}
+                        <select value={staffRoles[s.id] ?? 'sw'} onChange={e=>changeRole(s.id,e.target.value)}
                           style={{ padding:'3px 8px', borderRadius:'20px', fontSize:'11px', fontWeight:700, border:`1.5px solid ${rs.color}`, background:rs.bg_color, color:rs.color, cursor:'pointer', outline:'none' }}>
                           {effectiveRoles.map(r=><option key={r.name} value={r.name}>{r.label}</option>)}
                         </select>

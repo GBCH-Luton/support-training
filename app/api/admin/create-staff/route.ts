@@ -21,18 +21,22 @@ export async function POST(request: NextRequest) {
   if (callerErr || !caller?.email)
     return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
-  // ── 2. Confirm caller is an admin ────────────────────────────────────────────
+  // ── 2. Confirm caller is an admin (check this system's own permissions table) ─
   const adminClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-  const { data: callerRecord } = await adminClient
+  const { data: callerStaff } = await adminClient
     .from('staff')
-    .select('role')
+    .select('id')
     .eq('email', caller.email)
     .single()
 
-  if (!callerRecord || !['admin', 'training_admin'].includes(callerRecord.role))
+  const { data: callerPerms } = callerStaff
+    ? await adminClient.from('training_permissions').select('role').eq('staff_id', callerStaff.id).single()
+    : { data: null }
+
+  if (!callerPerms || !['admin', 'training_admin'].includes(callerPerms.role))
     return NextResponse.json({ error: 'Forbidden — admin access required' }, { status: 403 })
 
   // ── 3. Parse request ─────────────────────────────────────────────────────────
@@ -65,17 +69,22 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── 5. Insert staff table record ─────────────────────────────────────────────
+  // ── 5. Insert staff table record (shared identity — no role here) ───────────
   const { data: staffData, error: staffErr } = await adminClient
     .from('staff')
-    .insert({ name, email, job_title: jobTitle || '', role: role || 'sw', active: true, must_reset_password: true })
+    .insert({ name, email, job_title: jobTitle || '', active: true, must_reset_password: true })
     .select()
     .single()
 
   if (staffErr)
     return NextResponse.json({ error: staffErr.message }, { status: 500 })
 
-  // ── 6. Assign departments ────────────────────────────────────────────────────
+  // ── 6. Insert this system's role in training_permissions ─────────────────────
+  await adminClient
+    .from('training_permissions')
+    .insert({ staff_id: staffData.id, role: role || 'sw' })
+
+  // ── 7. Assign departments ────────────────────────────────────────────────────
   if (deptIds?.length > 0) {
     await adminClient
       .from('staff_departments')

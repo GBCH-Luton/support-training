@@ -25,18 +25,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
   }
 
-  // ── 2. Confirm caller is an admin (using service role to bypass RLS) ─────────
+  // ── 2. Confirm caller is an admin (check this system's own permissions table) ─
   const adminClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-  const { data: callerRecord } = await adminClient
+  const { data: callerStaff } = await adminClient
     .from('staff')
-    .select('role')
+    .select('id')
     .eq('email', caller.email)
     .single()
 
-  if (!callerRecord || !['admin', 'training_admin'].includes(callerRecord.role)) {
+  const { data: callerPerms } = callerStaff
+    ? await adminClient.from('training_permissions').select('role').eq('staff_id', callerStaff.id).single()
+    : { data: null }
+
+  if (!callerPerms || !['admin', 'training_admin'].includes(callerPerms.role)) {
     return NextResponse.json({ error: 'Forbidden — admin access required' }, { status: 403 })
   }
 
