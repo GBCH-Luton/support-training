@@ -174,19 +174,24 @@ export default function AdminStaff() {
     if (!resetModal || resetModal.step !== 'confirm') return
     setResetting(true)
     setResetError('')
-    const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch('/api/admin/reset-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token ?? ''}`,
-      },
-      body: JSON.stringify({ staffId: resetModal.staffId, email: resetModal.email }),
-    })
-    const json = await res.json()
-    setResetting(false)
-    if (!res.ok) { setResetError(json.error || 'Something went wrong'); return }
-    setResetModal({ step: 'done', name: resetModal.name, tempPassword: json.tempPassword })
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/admin/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({ staffId: resetModal.staffId, email: resetModal.email }),
+      })
+      const json = await res.json().catch(() => ({ error: `Server error (${res.status})` }))
+      if (!res.ok) { setResetError(json.error || 'Something went wrong'); return }
+      setResetModal({ step: 'done', name: resetModal.name, tempPassword: json.tempPassword })
+    } catch (err) {
+      setResetError('Network error — please check your connection and try again.')
+    } finally {
+      setResetting(false)
+    }
   }
 
   // ── Roles ────────────────────────────────────────────────────────────────────
