@@ -194,10 +194,6 @@ function BuilderInner() {
             ))}
           </div>
         </div>
-        <button onClick={saveCourse} disabled={saving}
-          style={{ marginTop: '8px', padding: '10px 24px', background: saved ? '#0F6E56' : '#2D5BE3', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
-          {saving ? 'Saving...' : saved ? '✓ Saved!' : currentCourseId ? 'Save changes' : 'Create course'}
-        </button>
       </div>
 {/* Final exam status */}
 {currentCourseId && (
@@ -349,6 +345,20 @@ function BuilderInner() {
           )}
         </div>
       )}
+
+      {/* ── Sticky save bar ── */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200, background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.10)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '14px', boxShadow: '0 -4px 16px rgba(0,0,0,0.07)' }}>
+        <span style={{ fontSize: '13px', color: '#8A8A82' }}>
+          {saved ? '✓ Changes saved' : 'Sections and departments save automatically — click here to save course details'}
+        </span>
+        <button onClick={saveCourse} disabled={saving}
+          style={{ padding: '11px 28px', background: saved ? '#0F6E56' : '#2D5BE3', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
+          {saving ? 'Saving...' : saved ? '✓ Saved!' : currentCourseId ? 'Save changes' : 'Create course'}
+        </button>
+      </div>
+
+      {/* Bottom padding so content isn't hidden behind the sticky bar */}
+      <div style={{ height: '72px' }} />
     </div>
   )
 }
