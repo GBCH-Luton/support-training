@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 type Staff      = { id: string; name: string; email: string; job_title: string; role: string; active: boolean; photo_url?: string; must_reset_password?: boolean }
 type ResetModal =
   | { step: 'confirm'; staffId: string; name: string; email: string }
-  | { step: 'done';    name: string; tempPassword: string }
+  | { step: 'done';    name: string; tempPassword: string; isNew?: boolean }
   | null
 type Department = { id: string; name: string; icon: string }
 type Role       = { id: string; name: string; label: string; color: string; bg_color: string; sort_order: number; is_admin: boolean }
@@ -113,13 +113,25 @@ export default function AdminStaff() {
   async function addStaff() {
     if (!newName.trim() || !newEmail.trim()) { alert('Name and email are required'); return }
     setSaving(true)
-    const { data } = await supabase.from('staff')
-      .insert({ name:newName, email:newEmail, job_title:newJobTitle, role:newRole, active:true })
-      .select().single()
-    if (data && newDepts.length > 0)
-      await supabase.from('staff_departments').insert(newDepts.map(d => ({ staff_id:data.id, department_id:d })))
-    setNewName(''); setNewEmail(''); setNewJobTitle(''); setNewRole('sw'); setNewDepts([])
-    setShowAdd(false); await fetchAll(); setSaving(false)
+    const capturedName = newName.trim()
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/admin/create-staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body: JSON.stringify({ name: newName, email: newEmail, jobTitle: newJobTitle, role: newRole, deptIds: newDepts }),
+      })
+      const json = await res.json().catch(() => ({ error: `Server error (${res.status})` }))
+      if (!res.ok) { alert(json.error || 'Failed to add staff member'); return }
+      setNewName(''); setNewEmail(''); setNewJobTitle(''); setNewRole('sw'); setNewDepts([])
+      setShowAdd(false)
+      await fetchAll()
+      setResetModal({ step: 'done', name: capturedName, tempPassword: json.tempPassword, isNew: true })
+    } catch {
+      alert('Network error — please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function changeRole(id: string, role: string) {
@@ -544,10 +556,14 @@ export default function AdminStaff() {
               </div>
             </>) : (<>
               <div style={{ width:'48px', height:'48px', background:'rgba(15,110,86,0.1)', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', marginBottom:'16px' }}>✅</div>
-              <h2 style={{ fontSize:'18px', fontWeight:700, color:'#1A1A18', marginBottom:'8px' }}>Temp password ready</h2>
+              <h2 style={{ fontSize:'18px', fontWeight:700, color:'#1A1A18', marginBottom:'8px' }}>
+                {resetModal.isNew ? `${resetModal.name} added` : 'Temp password ready'}
+              </h2>
               <p style={{ fontSize:'13px', color:'#5A5A55', lineHeight:1.6, marginBottom:'16px' }}>
-                Tell <strong>{resetModal.name}</strong> this password directly — in person, by phone, or secure message.
-                It will <strong>not be shown again</strong>.
+                {resetModal.isNew
+                  ? <>Their account is ready. Give <strong>{resetModal.name}</strong> this temporary password directly — in person, by phone, or secure message. It will <strong>not be shown again</strong>.</>
+                  : <>Tell <strong>{resetModal.name}</strong> this password directly — in person, by phone, or secure message. It will <strong>not be shown again</strong>.</>
+                }
               </p>
 
               {/* Password display */}

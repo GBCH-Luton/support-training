@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   const targetUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
   if (!targetUser) {
     return NextResponse.json(
-      { error: `No login account found for ${email}. This staff member may not have signed in yet — ask them to use the "Forgot password" email link for their first login, then you can use this reset tool for future resets.` },
+      { error: `No login account found for ${email}. This staff member was likely added before the current system — remove and re-add them using the Add Staff form to create their account.` },
       { status: 404 }
     )
   }
