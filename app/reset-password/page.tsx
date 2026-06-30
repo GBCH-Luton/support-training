@@ -15,7 +15,6 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     setIsForced(new URLSearchParams(window.location.search).get('force') === '1')
-  }, [])
     // PKCE flow: Supabase delivers a ?code= param — exchange it for a session
     const code = new URLSearchParams(window.location.search).get('code')
     if (code) {
