@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useUser } from '@/lib/useUser'
 import Link from 'next/link'
+import Header from '../components/Header'
 
 type Course = { id: string; title: string; icon: string; pass_mark: number; type: string }
 type ExamAttempt = { course_id: string; score: number; passed: boolean; date_taken: string }
@@ -90,8 +91,9 @@ export default function ProgressPage() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18' }}>
+      <Header />
       <style>{`
-        .pg-wrap { padding:24px 5%; max-width:1100px; margin:0 auto; }
+        .pg-wrap { padding:28px 5%; max-width:1400px; margin:0 auto; }
         .pg-tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:28px; }
         .pg-card { display:none; }
         .pg-table { display:table; }
@@ -103,9 +105,8 @@ export default function ProgressPage() {
       `}</style>
 
       <div className="pg-wrap">
-        <Link href="/" style={{ color: '#2D5BE3', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>← Back to courses</Link>
-        <h1 style={{ marginTop: '12px', marginBottom: '4px', fontSize: '24px' }}>My Progress</h1>
-        <p style={{ fontSize: '14px', color: '#8A8A82', marginBottom: '24px' }}>{user.name}</p>
+        <h1 style={{ marginBottom: '4px', fontSize: '24px', fontWeight: 700 }}>My Progress</h1>
+        <p style={{ fontSize: '14px', color: '#8A8A82', marginBottom: '28px' }}>{user.name}</p>
 
         {/* Summary tiles */}
         <div className="pg-tiles">

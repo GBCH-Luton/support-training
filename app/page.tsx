@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useUser } from '@/lib/useUser'
 import Link from 'next/link'
 import InstallPrompt from './components/InstallPrompt'
+import Header from './components/Header'
 
 type Course = { id: string; title: string; description: string; type: string; pass_mark: number; icon: string; category_id: string }
 type Category = { id: string; name: string; icon: string }
@@ -22,7 +23,6 @@ export default function Home() {
   const [statusByCourse, setStatusByCourse] = useState<Record<string, 'completed' | 'in_progress' | 'not_started'>>({})
   const [activeCat, setActiveCat] = useState('all')
   const [loading, setLoading] = useState(true)
-  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     if (!userLoading && !user) router.push('/login')
@@ -77,11 +77,6 @@ export default function Home() {
     fetchAllowedAndStatus()
   }, [user])
 
-  async function handleSignOut() {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
-
   if (userLoading) return (
     <div style={{ minHeight: '100vh', background: '#F4F3EF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>
       <p style={{ color: '#8A8A82' }}>Loading...</p>
@@ -95,61 +90,22 @@ export default function Home() {
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#F4F3EF', minHeight: '100vh', color: '#1A1A18' }}>
       <InstallPrompt />
+      <Header />
       <style>{`
         .gbch-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; }
         .gbch-wrap { padding:24px 5%; max-width:1400px; margin:0 auto; }
-        .gbch-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
-        .gbch-actions { display:flex; align-items:center; gap:10px; }
-        .gbch-menu-btn { display:none; }
         .gbch-slider { }
         .gbch-slider-pad { padding:32px 80px 44px; }
         .gbch-slider-title { font-size:22px; font-weight:500; }
         .gbch-slider-desc { }
         @media (max-width: 640px) {
           .gbch-grid { grid-template-columns:1fr; }
-          .gbch-actions { display:${menuOpen ? 'flex' : 'none'}; flex-direction:column; align-items:stretch; width:100%; gap:8px; margin-top:10px; }
-          .gbch-menu-btn { display:inline-flex; }
           .gbch-slider-pad { padding:22px 56px 38px; }
           .gbch-slider-title { font-size:18px; }
         }
       `}</style>
 
       <div className="gbch-wrap">
-        {/* Header */}
-        <div className="gbch-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: 'linear-gradient(135deg,#6FA0F5,#2D5BE3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: 700 }}>ST</div>
-            <div>
-              <div style={{ fontSize: '17px', fontWeight: 700 }}>My Courses</div>
-              <div style={{ fontSize: '12px', color: '#8A8A82' }}>Welcome back, {user.name.split(' ')[0]}</div>
-            </div>
-          </div>
-
-          <button className="gbch-menu-btn" onClick={() => setMenuOpen(!menuOpen)}
-            style={{ padding: '8px 12px', background: '#fff', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '18px', cursor: 'pointer' }}>
-            ☰
-          </button>
-
-          <div className="gbch-actions">
-            {(user.role === 'admin' || user.role === 'training_admin') && (
-              <Link href="/admin/dashboard" style={{ padding: '8px 14px', background: 'rgba(133,79,11,0.1)', color: '#854F0B', borderRadius: '9px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>
-                ⚙️ Admin panel
-              </Link>
-            )}
-            <Link href="/progress" style={{ padding: '8px 14px', background: 'rgba(45,91,227,0.1)', color: '#2D5BE3', borderRadius: '9px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>
-              📊 My progress
-            </Link>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: '#fff', borderRadius: '9px', border: '1px solid rgba(0,0,0,0.08)' }}>
-              <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'linear-gradient(135deg,#8F86E0,#4A3FB0)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '12px', fontWeight: 700 }}>{user.name.charAt(0)}</div>
-              <span style={{ fontSize: '13px', fontWeight: 600 }}>{user.name}</span>
-            </div>
-            <button onClick={handleSignOut}
-              style={{ padding: '8px 14px', background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '9px', fontSize: '13px', color: '#5A5A55', cursor: 'pointer' }}>
-              Sign out
-            </button>
-          </div>
-        </div>
-
         {/* Hero slider */}
         {!loading && allowedCourses.length > 0 && (
           <HeroSlider courses={allowedCourses} statusByCourse={statusByCourse} allCourses={courses} />
