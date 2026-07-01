@@ -53,10 +53,7 @@ export default function Header() {
                 style={{ height: '40px', width: 'auto', objectFit: 'contain', display: 'block' }}
               />
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-              <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A18', letterSpacing: '-0.01em', lineHeight: 1.2 }}>Support Training</span>
-              <span style={{ fontSize: '11px', color: '#8A8A82', fontWeight: 500, letterSpacing: '0.01em' }}>Green Bridge Community Housing</span>
-            </div>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A18', letterSpacing: '-0.01em' }}>Support Training</span>
           </Link>
 
           <div style={{ flex: 1 }} />
