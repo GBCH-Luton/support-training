@@ -14,6 +14,7 @@ type Question = {
   correct_answer: string
   quiz_type: string
   sort_order: number
+  hint?: string
 }
 
 type Section = { id: string; title: string; type: string }
@@ -166,6 +167,11 @@ function QuestionCard({ q, idx, saving, onUpdate, onDelete }: {
 
         <div style={{ fontSize: '12px', color: q.correct_answer ? '#0F6E56' : '#993C1D', fontWeight: 600 }}>
           {q.correct_answer ? `✓ Correct answer: Option ${q.correct_answer.toUpperCase()}` : '⚠️ Click a letter circle to mark the correct answer'}
+        </div>
+
+        <div>
+          <label style={labelStyle}>Hint <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#8A8A82' }}>(optional — shown to staff on request during the exam)</span></label>
+          <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={q.hint || ''} onChange={(e) => onUpdate(q.id, 'hint', e.target.value)} placeholder="e.g. Think about what you read in Section 2 about fire exits…" />
         </div>
       </div>
     </div>

@@ -15,7 +15,7 @@ function courseColour(id: string) {
   return CARD_SOLIDS[Math.abs(h) % CARD_SOLIDS.length]
 }
 type Section = { id: string; title: string; content: string; type: string; video_url: string; video_duration: number; slide_urls: string; sort_order: number }
-type Question = { id: string; section_id: string; quiz_type: string; question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_answer: string; sort_order: number }
+type Question = { id: string; section_id: string; quiz_type: string; question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_answer: string; sort_order: number; hint?: string }
 
 export default function CoursePage() {
   const params = useParams()
@@ -49,6 +49,10 @@ export default function CoursePage() {
   const [examQ, setExamQ] = useState(0)
   const [examPassedBefore, setExamPassedBefore] = useState(false)
   const [examQuestions, setExamQuestions] = useState<Question[]>([])
+  const [shownHints, setShownHints] = useState<Set<string>>(new Set())
+  function toggleHint(id: string) {
+    setShownHints(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
 
   useEffect(() => {
     if (!userLoading && !user) router.push('/login')
@@ -221,7 +225,19 @@ export default function CoursePage() {
           <div style={{ height: '6px', background: '#EDEBE5', borderRadius: '3px', marginBottom: '24px', overflow: 'hidden', marginTop: '10px' }}>
             <div style={{ width: `${(examQ / examQuestions.length) * 100}%`, height: '100%', background: '#534AB7', transition: 'width .3s', borderRadius: '3px' }} />
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', lineHeight: '1.4' }}>{q.question_text}</div>
+          <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px', lineHeight: '1.4' }}>{q.question_text}</div>
+          {q.hint && (
+            <div style={{ marginBottom: '16px' }}>
+              {shownHints.has(q.id) ? (
+                <div style={{ padding: '12px 14px', background: 'rgba(186,117,23,0.08)', border: '1px solid rgba(186,117,23,0.25)', borderRadius: '10px', fontSize: '13px', color: '#854F0B', lineHeight: 1.6 }}>
+                  💡 {q.hint}
+                  <button onClick={() => toggleHint(q.id)} style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#854F0B', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}>Hide</button>
+                </div>
+              ) : (
+                <button onClick={() => toggleHint(q.id)} style={{ padding: '6px 14px', background: 'rgba(186,117,23,0.07)', color: '#854F0B', border: '1px solid rgba(186,117,23,0.2)', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>💡 Show hint</button>
+              )}
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
             {(['a', 'b', 'c', 'd'] as const).map((letter) => {
               const optText = q[`option_${letter}` as keyof Question] as string
@@ -284,7 +300,19 @@ export default function CoursePage() {
             <div style={{ height: '6px', background: '#EDEBE5', borderRadius: '3px', marginBottom: '24px', overflow: 'hidden' }}>
               <div style={{ width: `${(quizQ / qs.length) * 100}%`, height: '100%', background: '#2D5BE3', transition: 'width .3s', borderRadius: '3px' }} />
             </div>
-            <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', lineHeight: '1.4' }}>{cq.question_text}</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px', lineHeight: '1.4' }}>{cq.question_text}</div>
+            {cq.hint && (
+              <div style={{ marginBottom: '16px' }}>
+                {shownHints.has(cq.id) ? (
+                  <div style={{ padding: '12px 14px', background: 'rgba(186,117,23,0.08)', border: '1px solid rgba(186,117,23,0.25)', borderRadius: '10px', fontSize: '13px', color: '#854F0B', lineHeight: 1.6 }}>
+                    💡 {cq.hint}
+                    <button onClick={() => toggleHint(cq.id)} style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#854F0B', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}>Hide</button>
+                  </div>
+                ) : (
+                  <button onClick={() => toggleHint(cq.id)} style={{ padding: '6px 14px', background: 'rgba(186,117,23,0.07)', color: '#854F0B', border: '1px solid rgba(186,117,23,0.2)', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>💡 Show hint</button>
+                )}
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
               {(['a', 'b', 'c', 'd'] as const).map((letter) => {
                 const optText = cq[`option_${letter}` as keyof Question] as string
