@@ -49,6 +49,8 @@ function BuilderInner() {
           
           const { data: feData } = await supabase.from('questions').select('id').eq('course_id', courseId).eq('quiz_type', 'final_exam')
         setFinalExamCount(feData?.length || 0)
+        const { data: cdData } = await supabase.from('course_departments').select('department_id').eq('course_id', courseId)
+        if (cdData) setCourseDepts(cdData.map((cd: { department_id: string }) => cd.department_id))
         setLoading(false)
       }
     }
