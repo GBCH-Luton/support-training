@@ -50,7 +50,7 @@ export default function Header() {
               </div>
             ) : (
               <img
-                src="/logo.png"
+                src="/logo.png.svg"
                 alt="GBCH"
                 onError={() => setLogoFailed(true)}
                 style={{ height: '40px', width: 'auto', objectFit: 'contain', display: 'block' }}
