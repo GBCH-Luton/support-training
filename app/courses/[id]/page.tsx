@@ -301,7 +301,7 @@ export default function CoursePage() {
             })}
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-            {examQ > 0 && <button onClick={() => setExamQ(examQ - 1)} style={secondaryBtn}>← Back</button>}
+            {examQ > 0 && !course?.question_time_limit && <button onClick={() => setExamQ(examQ - 1)} style={secondaryBtn}>← Back</button>}
             {!isLast ? (
               <button onClick={() => setExamQ(examQ + 1)} disabled={!examAnswers[q.id]} style={{ ...primaryBtn, background: '#534AB7', opacity: !examAnswers[q.id] ? 0.4 : 1, cursor: !examAnswers[q.id] ? 'not-allowed' : 'pointer' }}>Next →</button>
             ) : (
@@ -391,11 +391,11 @@ export default function CoursePage() {
               })}
             </div>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-              {quizQ > 0 && <button onClick={() => setQuizQ(quizQ - 1)} style={secondaryBtn}>← Back</button>}
+              {quizQ > 0 && !course?.question_time_limit && <button onClick={() => setQuizQ(quizQ - 1)} style={secondaryBtn}>← Back</button>}
               {!isLast ? (
                 <button onClick={() => setQuizQ(quizQ + 1)} disabled={!answers[cq.id]} style={{ ...primaryBtn, opacity: !answers[cq.id] ? 0.4 : 1, cursor: !answers[cq.id] ? 'not-allowed' : 'pointer' }}>Next →</button>
               ) : (
-                <button onClick={submitQuiz} disabled={qs.some((qq) => !answers[qq.id])} style={{ ...primaryBtn, opacity: qs.some((qq) => !answers[qq.id]) ? 0.4 : 1, cursor: qs.some((qq) => !answers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit check</button>
+                <button onClick={submitQuiz} disabled={!course?.question_time_limit && qs.some((qq) => !answers[qq.id])} style={{ ...primaryBtn, opacity: !course?.question_time_limit && qs.some((qq) => !answers[qq.id]) ? 0.4 : 1, cursor: !course?.question_time_limit && qs.some((qq) => !answers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit check</button>
               )}
               <span style={{ fontSize: '12px', color: '#8A8A82', marginLeft: 'auto' }}>{qs.filter((qq) => answers[qq.id]).length}/{qs.length}</span>
             </div>
