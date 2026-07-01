@@ -42,12 +42,9 @@ export default function Header() {
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', height: '64px', display: 'flex', alignItems: 'center', gap: '16px' }}>
 
           {/* Logo */}
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', flexShrink: 0 }}>
             {logoFailed ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg,#6FA0F5,#2D5BE3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>ST</div>
-                <span style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A18', letterSpacing: '-0.02em' }}>Support Training</span>
-              </div>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg,#6FA0F5,#2D5BE3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>ST</div>
             ) : (
               <img
                 src="/logo.png.svg"
@@ -56,6 +53,10 @@ export default function Header() {
                 style={{ height: '40px', width: 'auto', objectFit: 'contain', display: 'block' }}
               />
             )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+              <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A18', letterSpacing: '-0.01em', lineHeight: 1.2 }}>Support Training</span>
+              <span style={{ fontSize: '11px', color: '#8A8A82', fontWeight: 500, letterSpacing: '0.01em' }}>Green Bridge Community Housing</span>
+            </div>
           </Link>
 
           <div style={{ flex: 1 }} />
