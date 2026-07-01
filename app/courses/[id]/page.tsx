@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import { useUser } from '@/lib/useUser'
 
-type Course = { id: string; title: string; description: string; type: string; pass_mark: number; reminder_cycle: number; icon: string; exam_question_count?: number | null }
+type Course = { id: string; title: string; description: string; type: string; pass_mark: number; reminder_cycle: number; icon: string; exam_question_count?: number | null; question_time_limit?: number | null }
 
 const CARD_SOLIDS = ['#D4472A', '#1E3FB8', '#4A3FB0', '#0F6E56', '#BA7517', '#99355A']
 function courseColour(id: string) {
@@ -50,6 +50,7 @@ export default function CoursePage() {
   const [examPassedBefore, setExamPassedBefore] = useState(false)
   const [examQuestions, setExamQuestions] = useState<Question[]>([])
   const [shownHints, setShownHints] = useState<Set<string>>(new Set())
+  const [timeLeft, setTimeLeft] = useState<number | null>(null)
   function toggleHint(id: string) {
     setShownHints(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   }
@@ -103,6 +104,39 @@ export default function CoursePage() {
     }, 1000)
     return () => clearInterval(timer)
   }, [started, currentIndex, sections, watchedSections, showQuiz])
+
+  // Reset timer when exam question changes
+  useEffect(() => {
+    const limit = course?.question_time_limit
+    if (!limit || !inFinalExam || examResult) { setTimeLeft(null); return }
+    setTimeLeft(limit)
+  }, [examQ, inFinalExam, examResult, course?.question_time_limit])
+
+  // Reset timer when section check question changes
+  useEffect(() => {
+    const limit = course?.question_time_limit
+    if (!limit || !showQuiz || quizResult) { setTimeLeft(null); return }
+    setTimeLeft(limit)
+  }, [quizQ, showQuiz, quizResult, course?.question_time_limit])
+
+  // Count down one second at a time
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0) return
+    const t = setTimeout(() => setTimeLeft(p => p !== null ? p - 1 : null), 1000)
+    return () => clearTimeout(t)
+  }, [timeLeft])
+
+  // Auto-advance (or submit) when time runs out
+  useEffect(() => {
+    if (timeLeft !== 0) return
+    if (inFinalExam && !examResult) {
+      if (examQ < examQuestions.length - 1) setExamQ(q => q + 1)
+      else submitExam()
+    } else if (showQuiz && !quizResult) {
+      submitQuiz()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft])
 
   if (userLoading || loading) return <div style={pageStyle}><p>Loading course...</p></div>
   if (!user) return null
@@ -221,10 +255,25 @@ export default function CoursePage() {
       <div style={pageStyle}>
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
           <button onClick={() => { setInFinalExam(false); setExamAnswers({}); setExamQ(0) }} style={backBtn}>← Back to course</button>
-          <div style={{ marginTop: '16px', marginBottom: '6px', display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(83,74,183,0.1)', color: '#534AB7', fontSize: '12px', fontWeight: 600 }}>★ Final exam · {examQ + 1} of {examQuestions.length} · Pass {course.pass_mark}%</div>
-          <div style={{ height: '6px', background: '#EDEBE5', borderRadius: '3px', marginBottom: '24px', overflow: 'hidden', marginTop: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '16px', marginBottom: '6px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(83,74,183,0.1)', color: '#534AB7', fontSize: '12px', fontWeight: 600 }}>★ Final exam · {examQ + 1} of {examQuestions.length} · Pass {course.pass_mark}%</div>
+            {timeLeft !== null && course?.question_time_limit && (() => {
+              const pct = timeLeft / course.question_time_limit
+              const col = pct > 0.5 ? '#0F6E56' : pct > 0.25 ? '#854F0B' : '#993C1D'
+              const bg = pct > 0.5 ? 'rgba(15,110,86,0.1)' : pct > 0.25 ? 'rgba(133,79,11,0.1)' : 'rgba(153,60,29,0.1)'
+              return <div style={{ padding: '5px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, background: bg, color: col }}>⏱ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</div>
+            })()}
+          </div>
+          <div style={{ height: '6px', background: '#EDEBE5', borderRadius: '3px', overflow: 'hidden', marginTop: '10px' }}>
             <div style={{ width: `${(examQ / examQuestions.length) * 100}%`, height: '100%', background: '#534AB7', transition: 'width .3s', borderRadius: '3px' }} />
           </div>
+          {timeLeft !== null && course?.question_time_limit ? (
+            <div style={{ height: '4px', background: '#EDEBE5', borderRadius: '3px', marginTop: '4px', marginBottom: '24px', overflow: 'hidden' }}>
+              <div style={{ width: `${(timeLeft / course.question_time_limit) * 100}%`, height: '100%', background: timeLeft / course.question_time_limit > 0.5 ? '#0F6E56' : timeLeft / course.question_time_limit > 0.25 ? '#BA7517' : '#993C1D', transition: 'width 1s linear, background 0.5s', borderRadius: '3px' }} />
+            </div>
+          ) : (
+            <div style={{ marginBottom: '24px' }} />
+          )}
           <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px', lineHeight: '1.4' }}>{q.question_text}</div>
           {q.hint && (
             <div style={{ marginBottom: '16px' }}>
@@ -256,7 +305,7 @@ export default function CoursePage() {
             {!isLast ? (
               <button onClick={() => setExamQ(examQ + 1)} disabled={!examAnswers[q.id]} style={{ ...primaryBtn, background: '#534AB7', opacity: !examAnswers[q.id] ? 0.4 : 1, cursor: !examAnswers[q.id] ? 'not-allowed' : 'pointer' }}>Next →</button>
             ) : (
-              <button onClick={submitExam} disabled={examQuestions.some((qq) => !examAnswers[qq.id])} style={{ ...primaryBtn, background: '#534AB7', opacity: examQuestions.some((qq) => !examAnswers[qq.id]) ? 0.4 : 1, cursor: examQuestions.some((qq) => !examAnswers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit exam</button>
+              <button onClick={submitExam} disabled={!course?.question_time_limit && examQuestions.some((qq) => !examAnswers[qq.id])} style={{ ...primaryBtn, background: '#534AB7', opacity: !course?.question_time_limit && examQuestions.some((qq) => !examAnswers[qq.id]) ? 0.4 : 1, cursor: !course?.question_time_limit && examQuestions.some((qq) => !examAnswers[qq.id]) ? 'not-allowed' : 'pointer' }}>Submit exam</button>
             )}
             <span style={{ fontSize: '12px', color: '#8A8A82', marginLeft: 'auto' }}>{examQuestions.filter((qq) => examAnswers[qq.id]).length}/{examQuestions.length} answered</span>
           </div>
@@ -296,10 +345,25 @@ export default function CoursePage() {
         <div style={pageStyle}>
           <div style={{ maxWidth: '720px', margin: '0 auto' }}>
             <button onClick={() => setShowQuiz(false)} style={backBtn}>← Back to section</button>
-            <div style={{ marginTop: '16px', marginBottom: '10px', display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(45,91,227,0.1)', color: '#2D5BE3', fontSize: '12px', fontWeight: 600 }}>📝 Section check · {quizQ + 1} of {qs.length}</div>
-            <div style={{ height: '6px', background: '#EDEBE5', borderRadius: '3px', marginBottom: '24px', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '16px', marginBottom: '6px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'inline-block', padding: '5px 12px', borderRadius: '20px', background: 'rgba(45,91,227,0.1)', color: '#2D5BE3', fontSize: '12px', fontWeight: 600 }}>📝 Section check · {quizQ + 1} of {qs.length}</div>
+              {timeLeft !== null && course?.question_time_limit && (() => {
+                const pct = timeLeft / course.question_time_limit
+                const col = pct > 0.5 ? '#0F6E56' : pct > 0.25 ? '#854F0B' : '#993C1D'
+                const bg = pct > 0.5 ? 'rgba(15,110,86,0.1)' : pct > 0.25 ? 'rgba(133,79,11,0.1)' : 'rgba(153,60,29,0.1)'
+                return <div style={{ padding: '5px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, background: bg, color: col }}>⏱ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</div>
+              })()}
+            </div>
+            <div style={{ height: '6px', background: '#EDEBE5', borderRadius: '3px', overflow: 'hidden', marginTop: '10px' }}>
               <div style={{ width: `${(quizQ / qs.length) * 100}%`, height: '100%', background: '#2D5BE3', transition: 'width .3s', borderRadius: '3px' }} />
             </div>
+            {timeLeft !== null && course?.question_time_limit ? (
+              <div style={{ height: '4px', background: '#EDEBE5', borderRadius: '3px', marginTop: '4px', marginBottom: '24px', overflow: 'hidden' }}>
+                <div style={{ width: `${(timeLeft / course.question_time_limit) * 100}%`, height: '100%', background: timeLeft / course.question_time_limit > 0.5 ? '#0F6E56' : timeLeft / course.question_time_limit > 0.25 ? '#BA7517' : '#993C1D', transition: 'width 1s linear, background 0.5s', borderRadius: '3px' }} />
+              </div>
+            ) : (
+              <div style={{ marginBottom: '24px' }} />
+            )}
             <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px', lineHeight: '1.4' }}>{cq.question_text}</div>
             {cq.hint && (
               <div style={{ marginBottom: '16px' }}>

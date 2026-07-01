@@ -22,6 +22,7 @@ function BuilderInner() {
   const [courseDepts, setCourseDepts] = useState<string[]>([])
   const [finalExamCount, setFinalExamCount] = useState(0)
   const [examQuestionCount, setExamQuestionCount] = useState('')
+  const [questionTimeLimit, setQuestionTimeLimit] = useState('')
 
   // Course form fields
   const [title, setTitle] = useState('')
@@ -43,7 +44,7 @@ function BuilderInner() {
       if (courseId) {
         setLoading(true)
         const { data: course } = await supabase.from('courses').select('*').eq('id', courseId).single()
-        if (course) { setTitle(course.title); setDescription(course.description || ''); setCategoryId(course.category_id); setType(course.type); setStatus(course.status); setPassMark(course.pass_mark); setReminderCycle(course.reminder_cycle || 6); setIcon(course.icon || '📖'); setExamQuestionCount(course.exam_question_count ? String(course.exam_question_count) : '') }
+        if (course) { setTitle(course.title); setDescription(course.description || ''); setCategoryId(course.category_id); setType(course.type); setStatus(course.status); setPassMark(course.pass_mark); setReminderCycle(course.reminder_cycle || 6); setIcon(course.icon || '📖'); setExamQuestionCount(course.exam_question_count ? String(course.exam_question_count) : ''); setQuestionTimeLimit(course.question_time_limit ? String(course.question_time_limit) : '') }
         const { data: secData } = await supabase.from('course_sections').select('*').eq('course_id', courseId).order('sort_order')
         if (secData) setSections(secData)
           
@@ -71,7 +72,7 @@ function BuilderInner() {
   async function saveCourse() {
     if (!title.trim()) { alert('Please enter a course title'); return }
     setSaving(true)
-    const payload = { title, description, category_id: categoryId, type, status, pass_mark: passMark, reminder_cycle: type === 'mandatory' ? reminderCycle : null, icon, exam_question_count: examQuestionCount ? parseInt(examQuestionCount) : null }
+    const payload = { title, description, category_id: categoryId, type, status, pass_mark: passMark, reminder_cycle: type === 'mandatory' ? reminderCycle : null, icon, exam_question_count: examQuestionCount ? parseInt(examQuestionCount) : null, question_time_limit: questionTimeLimit ? parseInt(questionTimeLimit) : null }
     if (currentCourseId) {
       await supabase.from('courses').update(payload).eq('id', currentCourseId)
     } else {
@@ -184,6 +185,18 @@ function BuilderInner() {
               <input style={input} type="number" min={1} value={reminderCycle} onChange={(e) => setReminderCycle(Number(e.target.value))} />
             </div>
           )}
+          <div style={fg}>
+            <label style={label}>Time per question</label>
+            <select style={input} value={questionTimeLimit} onChange={e => setQuestionTimeLimit(e.target.value)}>
+              <option value="">No timer</option>
+              <option value="30">30 seconds</option>
+              <option value="60">1 minute</option>
+              <option value="90">1 min 30 sec</option>
+              <option value="120">2 minutes</option>
+              <option value="180">3 minutes</option>
+              <option value="300">5 minutes</option>
+            </select>
+          </div>
         </div>
         <div style={fg}>
           <label style={label}>Status</label>
